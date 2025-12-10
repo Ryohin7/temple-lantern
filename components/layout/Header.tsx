@@ -46,10 +46,10 @@ export function Header() {
               廟宇列表
             </Link>
             <Link 
-              href="/about" 
+              href="/blessings" 
               className="text-gray-700 hover:text-temple-red-600 font-medium transition-colors"
             >
-              關於我們
+              祈福留言
             </Link>
             <Link 
               href="/how-it-works" 
@@ -124,18 +124,18 @@ export function Header() {
               🏮 廟宇列表
             </Link>
             <Link 
-              href="/about" 
+              href="/blessings" 
               className="text-gray-700 hover:text-temple-red-600 font-medium py-2"
               onClick={() => setMobileMenuOpen(false)}
             >
-              關於我們
+              🙏 祈福留言
             </Link>
             <Link 
               href="/how-it-works" 
               className="text-gray-700 hover:text-temple-red-600 font-medium py-2"
               onClick={() => setMobileMenuOpen(false)}
             >
-              如何點燈
+              ✨ 如何點燈
             </Link>
             <div className="pt-4 border-t border-temple-gold-200">
               {user ? (

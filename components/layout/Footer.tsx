@@ -56,18 +56,23 @@ export function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/blessings" className="text-gray-300 hover:text-temple-gold-400 transition-colors">
+                  祈福留言
+                </Link>
+              </li>
+              <li>
                 <Link href="/how-it-works" className="text-gray-300 hover:text-temple-gold-400 transition-colors">
                   如何點燈
                 </Link>
               </li>
               <li>
-                <Link href="/about" className="text-gray-300 hover:text-temple-gold-400 transition-colors">
-                  關於我們
+                <Link href="/faq" className="text-gray-300 hover:text-temple-gold-400 transition-colors">
+                  常見問題
                 </Link>
               </li>
               <li>
-                <Link href="/faq" className="text-gray-300 hover:text-temple-gold-400 transition-colors">
-                  常見問題
+                <Link href="/about" className="text-gray-300 hover:text-temple-gold-400 transition-colors">
+                  關於我們
                 </Link>
               </li>
             </ul>
