@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://temple-lantern.vercel.app/sitemap.xml
+
