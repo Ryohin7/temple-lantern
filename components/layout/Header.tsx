@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { ShoppingCart, User, Menu, X, Flame } from 'lucide-react'
+import { ShoppingCart, User, Menu, X, Flame, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useCartStore, useUserStore } from '@/lib/store'
 import { Lantern } from '../temple/Lantern'
@@ -37,10 +37,17 @@ export function Header() {
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-8">
+          <nav className="hidden md:flex items-center gap-6">
+            <Link 
+              href="/search" 
+              className="text-gray-700 hover:text-temple-red-600 font-medium transition-colors flex items-center gap-1"
+            >
+              <Search className="w-4 h-4" />
+              搜尋
+            </Link>
             <Link 
               href="/temples" 
-              className="text-gray-700 hover:text-temple-red-600 font-medium transition-colors flex items-center gap-2"
+              className="text-gray-700 hover:text-temple-red-600 font-medium transition-colors flex items-center gap-1"
             >
               <Flame className="w-4 h-4" />
               廟宇列表

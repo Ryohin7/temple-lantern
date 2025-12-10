@@ -5,7 +5,7 @@ import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { 
   Building2, ShoppingBag, Flame, DollarSign, Users, Settings, 
-  LogOut, Bell, Plus, TrendingUp, Calendar, Eye, Edit, Trash2
+  LogOut, Bell, Plus, TrendingUp, Calendar, Eye, Edit, Trash2, BarChart3
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -106,23 +106,35 @@ export default function TempleAdminDashboard() {
               <CardContent className="p-4">
                 <nav className="space-y-2">
                   {[
-                    { id: 'overview', icon: <Building2 className="w-5 h-5" />, label: '總覽' },
-                    { id: 'orders', icon: <ShoppingBag className="w-5 h-5" />, label: '訂單管理' },
-                    { id: 'lanterns', icon: <Flame className="w-5 h-5" />, label: '燈種管理' },
-                    { id: 'temple', icon: <Settings className="w-5 h-5" />, label: '廟宇設定' },
+                    { id: 'overview', icon: <Building2 className="w-5 h-5" />, label: '總覽', href: null },
+                    { id: 'orders', icon: <ShoppingBag className="w-5 h-5" />, label: '訂單管理', href: null },
+                    { id: 'lanterns', icon: <Flame className="w-5 h-5" />, label: '燈種管理', href: '/temple-admin/lanterns' },
+                    { id: 'reports', icon: <BarChart3 className="w-5 h-5" />, label: '統計報表', href: '/temple-admin/reports' },
+                    { id: 'settings', icon: <Settings className="w-5 h-5" />, label: '廟宇設定', href: '/temple-admin/settings' },
                   ].map((item) => (
-                    <button
-                      key={item.id}
-                      onClick={() => setActiveTab(item.id)}
-                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
-                        activeTab === item.id
-                          ? 'bg-temple-red-600 text-white'
-                          : 'hover:bg-gray-100 text-gray-700'
-                      }`}
-                    >
-                      {item.icon}
-                      {item.label}
-                    </button>
+                    item.href ? (
+                      <Link
+                        key={item.id}
+                        href={item.href}
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all hover:bg-gray-100 text-gray-700"
+                      >
+                        {item.icon}
+                        {item.label}
+                      </Link>
+                    ) : (
+                      <button
+                        key={item.id}
+                        onClick={() => setActiveTab(item.id)}
+                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
+                          activeTab === item.id
+                            ? 'bg-temple-red-600 text-white'
+                            : 'hover:bg-gray-100 text-gray-700'
+                        }`}
+                      >
+                        {item.icon}
+                        {item.label}
+                      </button>
+                    )
                   ))}
                 </nav>
               </CardContent>
