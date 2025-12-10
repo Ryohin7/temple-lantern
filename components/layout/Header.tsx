@@ -53,16 +53,16 @@ export function Header() {
               廟宇列表
             </Link>
             <Link 
+              href="/events" 
+              className="text-gray-700 hover:text-temple-red-600 font-medium transition-colors"
+            >
+              法會活動
+            </Link>
+            <Link 
               href="/blessings" 
               className="text-gray-700 hover:text-temple-red-600 font-medium transition-colors"
             >
               祈福留言
-            </Link>
-            <Link 
-              href="/how-it-works" 
-              className="text-gray-700 hover:text-temple-red-600 font-medium transition-colors"
-            >
-              如何點燈
             </Link>
           </nav>
 

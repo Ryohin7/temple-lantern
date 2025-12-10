@@ -56,6 +56,11 @@ export function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/events" className="text-gray-300 hover:text-temple-gold-400 transition-colors">
+                  法會活動
+                </Link>
+              </li>
+              <li>
                 <Link href="/blessings" className="text-gray-300 hover:text-temple-gold-400 transition-colors">
                   祈福留言
                 </Link>
@@ -68,11 +73,6 @@ export function Footer() {
               <li>
                 <Link href="/faq" className="text-gray-300 hover:text-temple-gold-400 transition-colors">
                   常見問題
-                </Link>
-              </li>
-              <li>
-                <Link href="/about" className="text-gray-300 hover:text-temple-gold-400 transition-colors">
-                  關於我們
                 </Link>
               </li>
             </ul>
