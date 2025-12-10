@@ -4,44 +4,55 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { 
-  Shield, Building2, Users, DollarSign, ShoppingBag, FileText,
-  TrendingUp, Settings, LogOut, Bell, Eye, CheckCircle, XCircle,
-  BarChart3, Calendar, Flame, AlertTriangle
+  LayoutDashboard, Building2, Users, ShoppingBag, FileText, 
+  DollarSign, TrendingUp, Settings, Image, CalendarDays,
+  ChevronRight, LogOut, Bell
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Lantern } from '@/components/temple/Lantern'
 
 // 模擬統計資料
-const mockStats = {
-  totalRevenue: 2456800,
-  monthlyRevenue: 387600,
-  totalOrders: 1856,
-  monthlyOrders: 245,
-  totalTemples: 28,
-  activeTemples: 24,
-  totalUsers: 5680,
-  newUsersThisMonth: 342,
-  platformFee: 245680, // 10% 平台費
-  pendingApprovals: 3,
+const stats = {
+  totalRevenue: 2567800,
+  monthlyRevenue: 456000,
+  totalOrders: 1523,
+  monthlyOrders: 289,
+  totalTemples: 45,
+  activeTemples: 42,
+  totalUsers: 8956,
+  newUsers: 234,
+  platformFee: 128390,
 }
 
-// 模擬待審核廟宇
-const mockPendingTemples = [
-  { id: 1, name: '新竹城隍廟', applicant: '陳志明', date: '2024-12-08', status: 'pending' },
-  { id: 2, name: '彰化南瑤宮', applicant: '林美玲', date: '2024-12-09', status: 'pending' },
-  { id: 3, name: '嘉義朝天宮', applicant: '王建國', date: '2024-12-10', status: 'pending' },
+// 導航選單
+const navItems = [
+  { icon: LayoutDashboard, label: '儀表板', href: '/admin/dashboard', active: true },
+  { icon: Building2, label: '廟宇管理', href: '/admin/temples' },
+  { icon: Users, label: '用戶管理', href: '/admin/users' },
+  { icon: ShoppingBag, label: '訂單管理', href: '/admin/orders' },
+  { icon: CalendarDays, label: '活動管理', href: '/admin/events' },
+  { icon: FileText, label: '內容管理', href: '/admin/content' },
+  { icon: Image, label: '廣告管理', href: '/admin/banners' },
+  { icon: DollarSign, label: '財務報表', href: '/admin/finance' },
+  { icon: Settings, label: '系統設定', href: '/admin/settings' },
 ]
 
-// 模擬最新訂單
-const mockRecentOrders = [
-  { id: 'TL2024121001', temple: '艋舺龍山寺', amount: 3200, date: '2024-12-10 14:30' },
-  { id: 'TL2024121002', temple: '臺北行天宮', amount: 1800, date: '2024-12-10 15:20' },
-  { id: 'TL2024121003', temple: '大甲鎮瀾宮', amount: 5600, date: '2024-12-10 16:45' },
-  { id: 'TL2024121004', temple: '臺北霞海城隍廟', amount: 1500, date: '2024-12-10 17:10' },
+// 最近訂單
+const recentOrders = [
+  { id: 'ORD-001', temple: '艋舺龍山寺', amount: 2400, status: 'completed', date: '2024-12-10' },
+  { id: 'ORD-002', temple: '大甲鎮瀾宮', amount: 1800, status: 'pending', date: '2024-12-10' },
+  { id: 'ORD-003', temple: '臺北行天宮', amount: 3200, status: 'completed', date: '2024-12-09' },
+  { id: 'ORD-004', temple: '霞海城隍廟', amount: 1500, status: 'lighting', date: '2024-12-09' },
 ]
 
-export default function AdminDashboard() {
+// 待審核廟宇
+const pendingTemples = [
+  { id: 1, name: '新竹城隍廟', city: '新竹市', applyDate: '2024-12-08' },
+  { id: 2, name: '彰化南瑤宮', city: '彰化縣', applyDate: '2024-12-09' },
+]
+
+export default function AdminDashboardPage() {
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
@@ -50,175 +61,215 @@ export default function AdminDashboard() {
 
   if (!mounted) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-900">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-4xl animate-bounce">🏮</div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-900">
-      {/* Top Bar */}
-      <div className="bg-gray-800 border-b border-gray-700 py-4 px-6">
-        <div className="container mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 bg-temple-gold-600 rounded-lg flex items-center justify-center">
-              <Shield className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-white">台灣點燈網</h1>
-              <p className="text-sm text-gray-400">系統管理後台</p>
-            </div>
+    <div className="min-h-screen bg-gray-50">
+      <div className="flex">
+        {/* Sidebar */}
+        <aside className="w-64 min-h-screen bg-white border-r border-gray-200 fixed left-0 top-0">
+          {/* Logo */}
+          <div className="p-6 border-b border-gray-200">
+            <Link href="/admin/dashboard" className="flex items-center gap-3">
+              <Lantern size="sm" color="red" animate />
+              <div>
+                <h1 className="font-temple font-bold text-temple-red-700">台灣點燈網</h1>
+                <p className="text-xs text-gray-500">管理後台</p>
+              </div>
+            </Link>
           </div>
-          <div className="flex items-center gap-4">
-            <button className="relative p-2 hover:bg-gray-700 rounded-lg transition-colors text-gray-400">
-              <Bell className="w-5 h-5" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-            </button>
+
+          {/* Navigation */}
+          <nav className="p-4">
+            <ul className="space-y-1">
+              {navItems.map((item) => (
+                <li key={item.href}>
+                  <Link
+                    href={item.href}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                      item.active
+                        ? 'bg-temple-red-50 text-temple-red-700 font-medium'
+                        : 'text-gray-600 hover:bg-gray-100'
+                    }`}
+                  >
+                    <item.icon className="w-5 h-5" />
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+
+          {/* Logout */}
+          <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
             <Link href="/">
-              <Button variant="outline" size="sm" className="border-gray-600 text-gray-300 hover:bg-gray-700">
-                <LogOut className="w-4 h-4 mr-2" />
-                登出
+              <Button variant="ghost" className="w-full justify-start text-gray-600 hover:text-temple-red-600">
+                <LogOut className="w-5 h-5 mr-3" />
+                登出系統
               </Button>
             </Link>
           </div>
-        </div>
-      </div>
+        </aside>
 
-      <div className="container mx-auto px-4 py-8">
-        <div className="grid lg:grid-cols-5 gap-8">
-          {/* Sidebar */}
-          <div className="lg:col-span-1">
-            <Card className="bg-gray-800 border-gray-700 sticky top-8">
-              <CardContent className="p-4">
-                <nav className="space-y-2">
-                  {[
-                    { icon: <BarChart3 className="w-5 h-5" />, label: '總覽', href: '/admin/dashboard', active: true },
-                    { icon: <Building2 className="w-5 h-5" />, label: '廟宇管理', href: '/admin/temples' },
-                    { icon: <Users className="w-5 h-5" />, label: '用戶管理', href: '/admin/users' },
-                    { icon: <ShoppingBag className="w-5 h-5" />, label: '訂單管理', href: '/admin/orders' },
-                    { icon: <Calendar className="w-5 h-5" />, label: '法會活動', href: '/admin/events' },
-                    { icon: <FileText className="w-5 h-5" />, label: '內容管理', href: '/admin/content' },
-                    { icon: <Settings className="w-5 h-5" />, label: '系統設定', href: '/admin/settings' },
-                  ].map((item) => (
-                    <Link
-                      key={item.label}
-                      href={item.href}
-                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
-                        item.active
-                          ? 'bg-temple-gold-600 text-white'
-                          : 'text-gray-400 hover:bg-gray-700 hover:text-white'
-                      }`}
-                    >
-                      {item.icon}
-                      {item.label}
-                    </Link>
-                  ))}
-                </nav>
-              </CardContent>
-            </Card>
-          </div>
+        {/* Main Content */}
+        <main className="flex-1 ml-64">
+          {/* Top Bar */}
+          <header className="bg-white border-b border-gray-200 px-8 py-4 sticky top-0 z-10">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">系統儀表板</h1>
+                <p className="text-gray-500 text-sm">歡迎回來，管理員</p>
+              </div>
+              <div className="flex items-center gap-4">
+                <Button variant="ghost" size="icon" className="relative">
+                  <Bell className="w-5 h-5 text-gray-600" />
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-temple-red-600 text-white rounded-full text-xs flex items-center justify-center">
+                    3
+                  </span>
+                </Button>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-temple-gradient rounded-full flex items-center justify-center text-white font-bold">
+                    A
+                  </div>
+                  <div>
+                    <div className="font-medium text-gray-900">系統管理員</div>
+                    <div className="text-xs text-gray-500">admin@temple-lantern.tw</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </header>
 
-          {/* Main Content */}
-          <div className="lg:col-span-4 space-y-6">
-            {/* Stats Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-                <Card className="bg-gradient-to-br from-green-600 to-green-700 border-0">
+          <div className="p-8">
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+              >
+                <Card className="border-l-4 border-l-temple-red-500">
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                       <div>
-                        <div className="text-green-100 text-sm">平台總營收</div>
-                        <div className="text-2xl font-bold text-white">
-                          ${mockStats.totalRevenue.toLocaleString()}
-                        </div>
-                        <div className="text-green-200 text-xs mt-1">
-                          本月 ${mockStats.monthlyRevenue.toLocaleString()}
-                        </div>
+                        <p className="text-gray-500 text-sm">總營收</p>
+                        <p className="text-2xl font-bold text-gray-900">
+                          ${stats.totalRevenue.toLocaleString()}
+                        </p>
+                        <p className="text-green-600 text-sm flex items-center gap-1 mt-1">
+                          <TrendingUp className="w-4 h-4" />
+                          +12.5%
+                        </p>
                       </div>
-                      <DollarSign className="w-10 h-10 text-green-200 opacity-50" />
+                      <div className="w-12 h-12 bg-temple-red-100 rounded-full flex items-center justify-center">
+                        <DollarSign className="w-6 h-6 text-temple-red-600" />
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
               </motion.div>
 
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-                <Card className="bg-gradient-to-br from-blue-600 to-blue-700 border-0">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+              >
+                <Card className="border-l-4 border-l-blue-500">
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                       <div>
-                        <div className="text-blue-100 text-sm">總訂單數</div>
-                        <div className="text-2xl font-bold text-white">
-                          {mockStats.totalOrders.toLocaleString()}
-                        </div>
-                        <div className="text-blue-200 text-xs mt-1">
-                          本月 {mockStats.monthlyOrders} 筆
-                        </div>
+                        <p className="text-gray-500 text-sm">總訂單數</p>
+                        <p className="text-2xl font-bold text-gray-900">
+                          {stats.totalOrders.toLocaleString()}
+                        </p>
+                        <p className="text-green-600 text-sm flex items-center gap-1 mt-1">
+                          <TrendingUp className="w-4 h-4" />
+                          +8.3%
+                        </p>
                       </div>
-                      <ShoppingBag className="w-10 h-10 text-blue-200 opacity-50" />
+                      <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                        <ShoppingBag className="w-6 h-6 text-blue-600" />
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
               </motion.div>
 
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-                <Card className="bg-gradient-to-br from-purple-600 to-purple-700 border-0">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+              >
+                <Card className="border-l-4 border-l-green-500">
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                       <div>
-                        <div className="text-purple-100 text-sm">合作廟宇</div>
-                        <div className="text-2xl font-bold text-white">
-                          {mockStats.totalTemples}
-                        </div>
-                        <div className="text-purple-200 text-xs mt-1">
-                          {mockStats.activeTemples} 間上線中
-                        </div>
+                        <p className="text-gray-500 text-sm">合作廟宇</p>
+                        <p className="text-2xl font-bold text-gray-900">
+                          {stats.totalTemples}
+                        </p>
+                        <p className="text-gray-500 text-sm mt-1">
+                          {stats.activeTemples} 間上線中
+                        </p>
                       </div>
-                      <Building2 className="w-10 h-10 text-purple-200 opacity-50" />
+                      <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                        <Building2 className="w-6 h-6 text-green-600" />
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
               </motion.div>
 
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-                <Card className="bg-gradient-to-br from-orange-600 to-orange-700 border-0">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+              >
+                <Card className="border-l-4 border-l-purple-500">
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                       <div>
-                        <div className="text-orange-100 text-sm">註冊用戶</div>
-                        <div className="text-2xl font-bold text-white">
-                          {mockStats.totalUsers.toLocaleString()}
-                        </div>
-                        <div className="text-orange-200 text-xs mt-1">
-                          本月新增 {mockStats.newUsersThisMonth}
-                        </div>
+                        <p className="text-gray-500 text-sm">註冊用戶</p>
+                        <p className="text-2xl font-bold text-gray-900">
+                          {stats.totalUsers.toLocaleString()}
+                        </p>
+                        <p className="text-green-600 text-sm flex items-center gap-1 mt-1">
+                          +{stats.newUsers} 本月新增
+                        </p>
                       </div>
-                      <Users className="w-10 h-10 text-orange-200 opacity-50" />
+                      <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                        <Users className="w-6 h-6 text-purple-600" />
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
               </motion.div>
             </div>
 
-            {/* Platform Fee */}
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
-              <Card className="bg-gray-800 border-gray-700">
+            {/* Platform Fee Card */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="mb-8"
+            >
+              <Card className="bg-gradient-to-r from-temple-red-600 to-temple-orange-500 text-white">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-temple-gold-600/20 rounded-lg flex items-center justify-center">
-                        <TrendingUp className="w-6 h-6 text-temple-gold-400" />
-                      </div>
-                      <div>
-                        <div className="text-gray-400 text-sm">平台服務費收入 (10%)</div>
-                        <div className="text-3xl font-bold text-temple-gold-400">
-                          NT$ {mockStats.platformFee.toLocaleString()}
-                        </div>
-                      </div>
+                    <div>
+                      <p className="opacity-90">本月平台收入（5% 抽成）</p>
+                      <p className="text-4xl font-bold mt-2">
+                        ${stats.platformFee.toLocaleString()}
+                      </p>
                     </div>
                     <Link href="/admin/finance">
-                      <Button variant="outline" className="border-gray-600 text-gray-300 hover:bg-gray-700">
-                        查看財務報表
+                      <Button variant="secondary" className="bg-white/20 hover:bg-white/30 text-white border-0">
+                        查看詳情
+                        <ChevronRight className="w-4 h-4 ml-2" />
                       </Button>
                     </Link>
                   </div>
@@ -226,46 +277,41 @@ export default function AdminDashboard() {
               </Card>
             </motion.div>
 
-            <div className="grid lg:grid-cols-2 gap-6">
-              {/* Pending Approvals */}
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
-                <Card className="bg-gray-800 border-gray-700">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Recent Orders */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6 }}
+              >
+                <Card>
                   <CardHeader className="flex flex-row items-center justify-between">
-                    <CardTitle className="text-lg text-white flex items-center gap-2">
-                      <AlertTriangle className="w-5 h-5 text-yellow-500" />
-                      待審核廟宇
-                      <span className="ml-2 px-2 py-1 bg-yellow-500/20 text-yellow-500 rounded-full text-xs">
-                        {mockPendingTemples.length}
-                      </span>
-                    </CardTitle>
-                    <Link href="/admin/temples?status=pending">
-                      <Button variant="ghost" size="sm" className="text-gray-400 hover:text-white">
+                    <CardTitle className="text-lg">最近訂單</CardTitle>
+                    <Link href="/admin/orders">
+                      <Button variant="ghost" size="sm" className="text-temple-red-600">
                         查看全部
+                        <ChevronRight className="w-4 h-4 ml-1" />
                       </Button>
                     </Link>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-3">
-                      {mockPendingTemples.map((temple) => (
-                        <div key={temple.id} className="flex items-center justify-between p-3 bg-gray-700/50 rounded-lg">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-temple-gradient rounded-lg flex items-center justify-center">
-                              <Lantern size="sm" color="gold" animate={false} />
-                            </div>
-                            <div>
-                              <div className="font-medium text-white">{temple.name}</div>
-                              <div className="text-xs text-gray-400">
-                                申請人：{temple.applicant} | {temple.date}
-                              </div>
-                            </div>
+                    <div className="space-y-4">
+                      {recentOrders.map((order) => (
+                        <div key={order.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                          <div>
+                            <div className="font-medium text-gray-900">{order.id}</div>
+                            <div className="text-sm text-gray-500">{order.temple}</div>
                           </div>
-                          <div className="flex gap-2">
-                            <Button size="sm" variant="ghost" className="text-green-500 hover:bg-green-500/20">
-                              <CheckCircle className="w-4 h-4" />
-                            </Button>
-                            <Button size="sm" variant="ghost" className="text-red-500 hover:bg-red-500/20">
-                              <XCircle className="w-4 h-4" />
-                            </Button>
+                          <div className="text-right">
+                            <div className="font-medium text-gray-900">${order.amount.toLocaleString()}</div>
+                            <div className={`text-xs px-2 py-1 rounded-full inline-block ${
+                              order.status === 'completed' ? 'bg-green-100 text-green-700' :
+                              order.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                              'bg-blue-100 text-blue-700'
+                            }`}>
+                              {order.status === 'completed' ? '已完成' :
+                               order.status === 'pending' ? '待處理' : '點燈中'}
+                            </div>
                           </div>
                         </div>
                       ))}
@@ -274,82 +320,102 @@ export default function AdminDashboard() {
                 </Card>
               </motion.div>
 
-              {/* Recent Orders */}
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}>
-                <Card className="bg-gray-800 border-gray-700">
+              {/* Pending Temples */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.7 }}
+              >
+                <Card>
                   <CardHeader className="flex flex-row items-center justify-between">
-                    <CardTitle className="text-lg text-white flex items-center gap-2">
-                      <ShoppingBag className="w-5 h-5 text-blue-500" />
-                      最新訂單
-                    </CardTitle>
-                    <Link href="/admin/orders">
-                      <Button variant="ghost" size="sm" className="text-gray-400 hover:text-white">
+                    <CardTitle className="text-lg">待審核廟宇</CardTitle>
+                    <Link href="/admin/temples">
+                      <Button variant="ghost" size="sm" className="text-temple-red-600">
                         查看全部
+                        <ChevronRight className="w-4 h-4 ml-1" />
                       </Button>
                     </Link>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-3">
-                      {mockRecentOrders.map((order) => (
-                        <div key={order.id} className="flex items-center justify-between p-3 bg-gray-700/50 rounded-lg">
-                          <div>
-                            <div className="font-mono text-sm text-gray-400">{order.id}</div>
-                            <div className="font-medium text-white">{order.temple}</div>
-                            <div className="text-xs text-gray-500">{order.date}</div>
-                          </div>
-                          <div className="text-right">
-                            <div className="font-bold text-temple-gold-400">
-                              NT$ {order.amount.toLocaleString()}
+                    {pendingTemples.length > 0 ? (
+                      <div className="space-y-4">
+                        {pendingTemples.map((temple) => (
+                          <div key={temple.id} className="flex items-center justify-between p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 bg-temple-gradient rounded-lg flex items-center justify-center">
+                                <Lantern size="sm" color="gold" animate={false} />
+                              </div>
+                              <div>
+                                <div className="font-medium text-gray-900">{temple.name}</div>
+                                <div className="text-sm text-gray-500">{temple.city} · {temple.applyDate}</div>
+                              </div>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white">
+                                核准
+                              </Button>
+                              <Button size="sm" variant="outline" className="text-red-600 border-red-300 hover:bg-red-50">
+                                駁回
+                              </Button>
                             </div>
                           </div>
-                        </div>
-                      ))}
-                    </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-gray-500">
+                        <Building2 className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                        目前沒有待審核的廟宇
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </motion.div>
             </div>
 
             {/* Quick Actions */}
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }}>
-              <Card className="bg-gray-800 border-gray-700">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.8 }}
+              className="mt-8"
+            >
+              <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg text-white">快速操作</CardTitle>
+                  <CardTitle className="text-lg">快速操作</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <Link href="/admin/content">
-                      <div className="p-4 bg-gray-700/50 rounded-lg text-center hover:bg-gray-700 transition-colors cursor-pointer">
-                        <FileText className="w-8 h-8 text-temple-gold-400 mx-auto mb-2" />
-                        <div className="text-white text-sm">編輯頁面內容</div>
-                      </div>
-                    </Link>
-                    <Link href="/admin/events/new">
-                      <div className="p-4 bg-gray-700/50 rounded-lg text-center hover:bg-gray-700 transition-colors cursor-pointer">
-                        <Calendar className="w-8 h-8 text-blue-400 mx-auto mb-2" />
-                        <div className="text-white text-sm">新增法會活動</div>
-                      </div>
-                    </Link>
                     <Link href="/admin/temples">
-                      <div className="p-4 bg-gray-700/50 rounded-lg text-center hover:bg-gray-700 transition-colors cursor-pointer">
-                        <Building2 className="w-8 h-8 text-purple-400 mx-auto mb-2" />
-                        <div className="text-white text-sm">管理廟宇</div>
-                      </div>
+                      <Button variant="outline" className="w-full h-auto py-6 flex flex-col gap-2 hover:bg-temple-gold-50 hover:border-temple-gold-300">
+                        <Building2 className="w-8 h-8 text-temple-red-600" />
+                        <span>管理廟宇</span>
+                      </Button>
+                    </Link>
+                    <Link href="/admin/orders">
+                      <Button variant="outline" className="w-full h-auto py-6 flex flex-col gap-2 hover:bg-temple-gold-50 hover:border-temple-gold-300">
+                        <ShoppingBag className="w-8 h-8 text-blue-600" />
+                        <span>查看訂單</span>
+                      </Button>
+                    </Link>
+                    <Link href="/admin/banners">
+                      <Button variant="outline" className="w-full h-auto py-6 flex flex-col gap-2 hover:bg-temple-gold-50 hover:border-temple-gold-300">
+                        <Image className="w-8 h-8 text-green-600" />
+                        <span>廣告設定</span>
+                      </Button>
                     </Link>
                     <Link href="/admin/settings">
-                      <div className="p-4 bg-gray-700/50 rounded-lg text-center hover:bg-gray-700 transition-colors cursor-pointer">
-                        <Settings className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                        <div className="text-white text-sm">系統設定</div>
-                      </div>
+                      <Button variant="outline" className="w-full h-auto py-6 flex flex-col gap-2 hover:bg-temple-gold-50 hover:border-temple-gold-300">
+                        <Settings className="w-8 h-8 text-purple-600" />
+                        <span>系統設定</span>
+                      </Button>
                     </Link>
                   </div>
                 </CardContent>
               </Card>
             </motion.div>
           </div>
-        </div>
+        </main>
       </div>
     </div>
   )
 }
-

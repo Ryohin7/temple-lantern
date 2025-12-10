@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { ShoppingCart, User, Menu, X, Flame, Search } from 'lucide-react'
+import { ShoppingCart, User, Menu, X, Flame, Search, ClipboardList, CalendarDays } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useCartStore, useUserStore } from '@/lib/store'
 import { Lantern } from '../temple/Lantern'
@@ -37,14 +37,7 @@ export function Header() {
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-6">
-            <Link 
-              href="/search" 
-              className="text-gray-700 hover:text-temple-red-600 font-medium transition-colors flex items-center gap-1"
-            >
-              <Search className="w-4 h-4" />
-              搜尋
-            </Link>
+          <nav className="hidden lg:flex items-center gap-5">
             <Link 
               href="/temples" 
               className="text-gray-700 hover:text-temple-red-600 font-medium transition-colors flex items-center gap-1"
@@ -54,8 +47,9 @@ export function Header() {
             </Link>
             <Link 
               href="/events" 
-              className="text-gray-700 hover:text-temple-red-600 font-medium transition-colors"
+              className="text-gray-700 hover:text-temple-red-600 font-medium transition-colors flex items-center gap-1"
             >
+              <CalendarDays className="w-4 h-4" />
               法會活動
             </Link>
             <Link 
@@ -64,10 +58,24 @@ export function Header() {
             >
               祈福留言
             </Link>
+            <Link 
+              href="/orders" 
+              className="text-gray-700 hover:text-temple-red-600 font-medium transition-colors flex items-center gap-1"
+            >
+              <ClipboardList className="w-4 h-4" />
+              訂單查詢
+            </Link>
           </nav>
 
           {/* Actions */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            {/* Search */}
+            <Link href="/search">
+              <Button variant="ghost" size="icon" className="text-gray-600 hover:text-temple-red-600 hover:bg-temple-gold-50">
+                <Search className="w-5 h-5" />
+              </Button>
+            </Link>
+
             {/* Cart */}
             <Link href="/cart">
               <Button variant="outline" size="icon" className="relative border-temple-gold-300 hover:bg-temple-gold-50">
@@ -105,7 +113,7 @@ export function Header() {
             <Button
               variant="ghost"
               size="icon"
-              className="md:hidden"
+              className="lg:hidden"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -120,26 +128,40 @@ export function Header() {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
-          className="md:hidden border-t border-temple-gold-200 bg-white"
+          className="lg:hidden border-t border-temple-gold-200 bg-white"
         >
           <nav className="container mx-auto px-4 py-4 flex flex-col gap-4">
             <Link 
               href="/temples" 
-              className="text-gray-700 hover:text-temple-red-600 font-medium py-2"
+              className="text-gray-700 hover:text-temple-red-600 font-medium py-2 flex items-center gap-2"
               onClick={() => setMobileMenuOpen(false)}
             >
               🏮 廟宇列表
             </Link>
             <Link 
+              href="/events" 
+              className="text-gray-700 hover:text-temple-red-600 font-medium py-2 flex items-center gap-2"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              📅 法會活動
+            </Link>
+            <Link 
               href="/blessings" 
-              className="text-gray-700 hover:text-temple-red-600 font-medium py-2"
+              className="text-gray-700 hover:text-temple-red-600 font-medium py-2 flex items-center gap-2"
               onClick={() => setMobileMenuOpen(false)}
             >
               🙏 祈福留言
             </Link>
             <Link 
+              href="/orders" 
+              className="text-gray-700 hover:text-temple-red-600 font-medium py-2 flex items-center gap-2"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              📋 訂單查詢
+            </Link>
+            <Link 
               href="/how-it-works" 
-              className="text-gray-700 hover:text-temple-red-600 font-medium py-2"
+              className="text-gray-700 hover:text-temple-red-600 font-medium py-2 flex items-center gap-2"
               onClick={() => setMobileMenuOpen(false)}
             >
               ✨ 如何點燈
@@ -167,5 +189,3 @@ export function Header() {
     </header>
   )
 }
-
-

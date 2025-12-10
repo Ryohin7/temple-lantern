@@ -174,21 +174,26 @@ function SearchContent() {
               <p className="opacity-90">尋找您想要點燈祈福的廟宇</p>
             </div>
 
-            {/* Search Bar */}
-            <div className="relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-6 h-6 text-gray-400" />
-              <Input
-                type="text"
-                placeholder="搜尋廟宇名稱、神明、地區、燈種..."
-                className="w-full pl-12 pr-4 py-6 text-lg rounded-full border-0 shadow-lg"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-              />
+            {/* Search Bar - 修復跑版問題 */}
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="relative flex-1">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Input
+                  type="text"
+                  placeholder="搜尋廟宇名稱、神明、地區、燈種..."
+                  className="w-full pl-12 pr-4 py-6 text-lg rounded-xl border-0 shadow-lg"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                />
+              </div>
               <Button
                 variant="temple"
-                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full px-6"
+                size="lg"
+                className="h-auto py-4 px-8 rounded-xl whitespace-nowrap"
                 onClick={handleSearch}
               >
+                <Search className="w-5 h-5 mr-2" />
                 搜尋
               </Button>
             </div>
@@ -231,18 +236,18 @@ function SearchContent() {
                         onClick={clearFilters}
                         className="text-sm text-temple-red-600 hover:underline"
                       >
-                        清除全部
+                        清除
                       </button>
                     )}
                   </div>
 
-                  {/* City Filter */}
+                  {/* 城市 */}
                   <div className="mb-4">
-                    <label className="text-sm font-medium text-gray-700 mb-2 block">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       地區
                     </label>
                     <select
-                      className="w-full px-3 py-2 border rounded-lg text-sm"
+                      className="w-full p-2 border rounded-lg"
                       value={filters.city}
                       onChange={(e) => setFilters({ ...filters, city: e.target.value })}
                     >
@@ -253,13 +258,13 @@ function SearchContent() {
                     </select>
                   </div>
 
-                  {/* Lantern Type Filter */}
+                  {/* 燈種 */}
                   <div className="mb-4">
-                    <label className="text-sm font-medium text-gray-700 mb-2 block">
-                      燈種類型
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      燈種
                     </label>
                     <select
-                      className="w-full px-3 py-2 border rounded-lg text-sm"
+                      className="w-full p-2 border rounded-lg"
                       value={filters.lanternType}
                       onChange={(e) => setFilters({ ...filters, lanternType: e.target.value })}
                     >
@@ -270,24 +275,24 @@ function SearchContent() {
                     </select>
                   </div>
 
-                  {/* Price Range */}
-                  <div className="mb-4">
-                    <label className="text-sm font-medium text-gray-700 mb-2 block">
+                  {/* 價格範圍 */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       價格範圍
                     </label>
-                    <div className="flex gap-2 items-center">
+                    <div className="flex items-center gap-2">
                       <Input
                         type="number"
                         placeholder="最低"
-                        className="text-sm"
+                        className="w-full"
                         value={filters.minPrice}
                         onChange={(e) => setFilters({ ...filters, minPrice: e.target.value })}
                       />
-                      <span className="text-gray-400">-</span>
+                      <span className="text-gray-500">~</span>
                       <Input
                         type="number"
                         placeholder="最高"
-                        className="text-sm"
+                        className="w-full"
                         value={filters.maxPrice}
                         onChange={(e) => setFilters({ ...filters, maxPrice: e.target.value })}
                       />
@@ -301,19 +306,11 @@ function SearchContent() {
             <div className="flex-1">
               {/* Results Header */}
               <div className="flex items-center justify-between mb-6">
-                <div>
-                  <span className="text-gray-600">
-                    找到 <span className="font-bold text-temple-red-700">{results.length}</span> 間廟宇
-                  </span>
-                  {query && (
-                    <span className="text-gray-500 ml-2">
-                      關於「{query}」
-                    </span>
-                  )}
-                </div>
+                <p className="text-gray-600">
+                  共找到 <span className="font-bold text-temple-red-600">{results.length}</span> 間廟宇
+                </p>
                 <Button
                   variant="outline"
-                  size="sm"
                   className="lg:hidden"
                   onClick={() => setShowFilters(!showFilters)}
                 >
@@ -322,22 +319,22 @@ function SearchContent() {
                 </Button>
               </div>
 
-              {/* Active Filters Tags */}
+              {/* Active Filters */}
               {hasActiveFilters && (
                 <div className="flex flex-wrap gap-2 mb-4">
                   {filters.city && (
-                    <span className="inline-flex items-center gap-1 px-3 py-1 bg-temple-gold-100 text-temple-red-700 rounded-full text-sm">
+                    <span className="inline-flex items-center gap-1 px-3 py-1 bg-temple-gold-100 text-temple-gold-800 rounded-full text-sm">
                       {filters.city}
                       <button onClick={() => setFilters({ ...filters, city: '' })}>
-                        <X className="w-4 h-4" />
+                        <X className="w-3 h-3" />
                       </button>
                     </span>
                   )}
                   {filters.lanternType && (
-                    <span className="inline-flex items-center gap-1 px-3 py-1 bg-temple-gold-100 text-temple-red-700 rounded-full text-sm">
+                    <span className="inline-flex items-center gap-1 px-3 py-1 bg-temple-red-100 text-temple-red-800 rounded-full text-sm">
                       {filters.lanternType}
                       <button onClick={() => setFilters({ ...filters, lanternType: '' })}>
-                        <X className="w-4 h-4" />
+                        <X className="w-3 h-3" />
                       </button>
                     </span>
                   )}
@@ -345,21 +342,8 @@ function SearchContent() {
               )}
 
               {/* Results Grid */}
-              {results.length === 0 ? (
-                <Card className="text-center py-16">
-                  <CardContent>
-                    <div className="text-6xl mb-4">🔍</div>
-                    <h3 className="text-xl font-bold text-gray-600 mb-2">找不到符合的廟宇</h3>
-                    <p className="text-gray-500 mb-6">
-                      請嘗試其他關鍵字或調整篩選條件
-                    </p>
-                    <Button variant="temple" onClick={clearFilters}>
-                      清除篩選條件
-                    </Button>
-                  </CardContent>
-                </Card>
-              ) : (
-                <div className="grid gap-4">
+              {results.length > 0 ? (
+                <div className="grid gap-6">
                   {results.map((temple, index) => (
                     <motion.div
                       key={temple.id}
@@ -368,47 +352,45 @@ function SearchContent() {
                       transition={{ delay: index * 0.1 }}
                     >
                       <Link href={`/temples/${temple.slug}`}>
-                        <Card className="overflow-hidden hover:shadow-lg hover:border-temple-gold-400 transition-all">
-                          <CardContent className="p-0">
-                            <div className="flex flex-col md:flex-row">
-                              {/* Image */}
-                              <div className="md:w-48 h-48 md:h-auto bg-temple-gradient flex items-center justify-center">
+                        <Card className="hover:shadow-lg transition-shadow cursor-pointer border-2 hover:border-temple-gold-300">
+                          <CardContent className="p-6">
+                            <div className="flex items-start gap-6">
+                              {/* Image placeholder */}
+                              <div className="w-32 h-32 bg-temple-gradient rounded-lg flex-shrink-0 flex items-center justify-center">
                                 <Lantern size="lg" color="gold" animate={false} />
                               </div>
 
-                              {/* Info */}
-                              <div className="flex-1 p-6">
-                                <div className="flex items-start justify-between mb-2">
+                              {/* Content */}
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-start justify-between gap-4">
                                   <div>
-                                    <h3 className="text-xl font-temple font-bold text-temple-red-800">
+                                    <h3 className="text-xl font-temple font-bold text-gray-900 mb-1">
                                       {temple.name}
                                     </h3>
-                                    <p className="text-gray-600 flex items-center gap-1 text-sm">
-                                      <MapPin className="w-4 h-4" />
-                                      {temple.city} {temple.district}
-                                    </p>
+                                    <div className="flex items-center gap-4 text-sm text-gray-600 mb-2">
+                                      <span className="flex items-center gap-1">
+                                        <MapPin className="w-4 h-4" />
+                                        {temple.city} {temple.district}
+                                      </span>
+                                      <span>主祀：{temple.mainGod}</span>
+                                    </div>
                                   </div>
-                                  <div className="flex items-center gap-1 bg-yellow-50 px-2 py-1 rounded">
-                                    <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                                  <div className="flex items-center gap-1 text-yellow-500">
+                                    <Star className="w-5 h-5 fill-current" />
                                     <span className="font-bold">{temple.rating}</span>
-                                    <span className="text-gray-500 text-sm">({temple.reviews})</span>
+                                    <span className="text-gray-400 text-sm">({temple.reviews})</span>
                                   </div>
                                 </div>
 
-                                <p className="text-gray-600 mb-3 flex items-center gap-2">
-                                  <Flame className="w-4 h-4 text-temple-red-500" />
-                                  主祀：{temple.mainGod}
-                                </p>
-
                                 {/* Lantern Types */}
-                                <div className="flex flex-wrap gap-2 mb-3">
+                                <div className="flex flex-wrap gap-2 mt-3">
                                   {temple.lanternTypes.map((type) => (
                                     <span
                                       key={type}
-                                      className={`px-2 py-1 rounded text-xs ${
+                                      className={`px-2 py-1 rounded-full text-xs ${
                                         filters.lanternType === type
                                           ? 'bg-temple-red-600 text-white'
-                                          : 'bg-temple-gold-100 text-temple-red-700'
+                                          : 'bg-temple-gold-100 text-temple-gold-700'
                                       }`}
                                     >
                                       {type}
@@ -416,13 +398,8 @@ function SearchContent() {
                                   ))}
                                 </div>
 
-                                <div className="flex items-center justify-between">
-                                  <span className="text-gray-500 text-sm">
-                                    價格範圍：NT$ {temple.priceRange}
-                                  </span>
-                                  <Button variant="temple" size="sm">
-                                    前往點燈
-                                  </Button>
+                                <div className="mt-3 text-sm text-gray-600">
+                                  價格範圍：<span className="font-medium text-temple-red-600">${temple.priceRange}</span>
                                 </div>
                               </div>
                             </div>
@@ -432,6 +409,15 @@ function SearchContent() {
                     </motion.div>
                   ))}
                 </div>
+              ) : (
+                <Card className="p-12 text-center">
+                  <div className="text-6xl mb-4">🔍</div>
+                  <h3 className="text-xl font-bold text-gray-700 mb-2">找不到符合條件的廟宇</h3>
+                  <p className="text-gray-500 mb-4">請嘗試其他搜尋條件</p>
+                  <Button variant="temple" onClick={clearFilters}>
+                    清除篩選條件
+                  </Button>
+                </Card>
               )}
             </div>
           </div>
@@ -452,4 +438,3 @@ export default function SearchPage() {
     </Suspense>
   )
 }
-

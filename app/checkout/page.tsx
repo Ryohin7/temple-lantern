@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { CreditCard, CheckCircle, AlertCircle } from 'lucide-react'
+import { CreditCard, CheckCircle, AlertCircle, Store, Banknote } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -14,11 +14,14 @@ import { FireworkEffect } from '@/components/temple/TempleDecoration'
 
 export default function CheckoutPage() {
   const router = useRouter()
+  const formRef = useRef<HTMLFormElement>(null)
   const { items, getTotalPrice, clearCart } = useCartStore()
   const [showFireworks, setShowFireworks] = useState(false)
   const [processing, setProcessing] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState('credit_card')
   const [mounted, setMounted] = useState(false)
+  const [ecpayParams, setEcpayParams] = useState<Record<string, string> | null>(null)
+  const [ecpayUrl, setEcpayUrl] = useState<string>('')
   
   const [customerInfo, setCustomerInfo] = useState({
     name: '',
@@ -38,6 +41,13 @@ export default function CheckoutPage() {
       router.push('/cart')
     }
   }, [mounted, items.length, router])
+
+  // 當 ecpayParams 設定後自動提交表單
+  useEffect(() => {
+    if (ecpayParams && formRef.current) {
+      formRef.current.submit()
+    }
+  }, [ecpayParams])
 
   // 伺服器端渲染時顯示載入狀態
   if (!mounted) {
@@ -65,7 +75,51 @@ export default function CheckoutPage() {
 
     setProcessing(true)
 
-    // Simulate payment processing
+    try {
+      // 建立訂單編號
+      const orderId = `ORD-${Date.now()}`
+      
+      // 準備訂單商品資訊
+      const orderItems = items.map(item => ({
+        name: `${item.templeName}-${item.lanternName}`,
+        quantity: item.quantity,
+      }))
+
+      // 呼叫綠界金流 API
+      const response = await fetch('/api/payment/ecpay', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          orderId,
+          amount: getTotalPrice(),
+          description: `台灣點燈網點燈服務`,
+          items: orderItems,
+          customerInfo,
+          paymentMethod,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        // 設定綠界表單參數，會自動提交
+        setEcpayUrl(data.paymentUrl)
+        setEcpayParams(data.params)
+      } else {
+        throw new Error(data.error || '金流處理失敗')
+      }
+    } catch (error) {
+      console.error('Payment error:', error)
+      alert('付款處理失敗，請稍後再試')
+      setProcessing(false)
+    }
+  }
+
+  // 模擬付款（測試用）
+  const handleTestPayment = () => {
+    setProcessing(true)
     setTimeout(() => {
       setProcessing(false)
       setShowFireworks(true)
@@ -80,6 +134,15 @@ export default function CheckoutPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-temple-red-50 to-white py-12">
       {showFireworks && <FireworkEffect trigger={true} />}
+      
+      {/* 綠界金流表單（隱藏） */}
+      {ecpayParams && (
+        <form ref={formRef} method="POST" action={ecpayUrl} style={{ display: 'none' }}>
+          {Object.entries(ecpayParams).map(([key, value]) => (
+            <input key={key} type="hidden" name={key} value={value} />
+          ))}
+        </form>
+      )}
       
       <div className="container mx-auto px-4 max-w-4xl">
         {/* Header */}
@@ -160,11 +223,11 @@ export default function CheckoutPage() {
               <Card className="border-2 border-temple-gold-300 shadow-lg">
                 <CardHeader className="bg-temple-gold-50">
                   <CardTitle className="text-2xl font-temple text-temple-red-800">
-                    付款方式
+                    付款方式（綠界金流）
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-6 space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div
                       className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
                         paymentMethod === 'credit_card'
@@ -174,10 +237,10 @@ export default function CheckoutPage() {
                       onClick={() => setPaymentMethod('credit_card')}
                     >
                       <div className="flex items-center gap-3">
-                        <CreditCard className="w-6 h-6" />
+                        <CreditCard className="w-6 h-6 text-blue-600" />
                         <div>
                           <div className="font-bold">信用卡</div>
-                          <div className="text-sm text-gray-600">VISA / MasterCard / JCB</div>
+                          <div className="text-xs text-gray-600">VISA / MasterCard / JCB</div>
                         </div>
                       </div>
                     </div>
@@ -190,10 +253,26 @@ export default function CheckoutPage() {
                       onClick={() => setPaymentMethod('atm')}
                     >
                       <div className="flex items-center gap-3">
-                        <div className="text-2xl">🏦</div>
+                        <Banknote className="w-6 h-6 text-green-600" />
                         <div>
                           <div className="font-bold">ATM 轉帳</div>
-                          <div className="text-sm text-gray-600">虛擬帳號繳費</div>
+                          <div className="text-xs text-gray-600">虛擬帳號繳費</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div
+                      className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                        paymentMethod === 'cvs'
+                          ? 'border-temple-red-600 bg-temple-red-50'
+                          : 'border-temple-gold-200 hover:border-temple-gold-400'
+                      }`}
+                      onClick={() => setPaymentMethod('cvs')}
+                    >
+                      <div className="flex items-center gap-3">
+                        <Store className="w-6 h-6 text-orange-600" />
+                        <div>
+                          <div className="font-bold">超商代碼</div>
+                          <div className="text-xs text-gray-600">7-11 / 全家</div>
                         </div>
                       </div>
                     </div>
@@ -202,7 +281,8 @@ export default function CheckoutPage() {
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start gap-3">
                     <AlertCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
                     <div className="text-sm text-blue-900">
-                      本平台採用安全加密付款系統，您的付款資訊受到完善保護
+                      <p>本平台採用<strong>綠界 ECPay</strong> 安全加密付款系統</p>
+                      <p className="text-xs mt-1 text-blue-700">您的付款資訊受到銀行級加密保護，請安心使用</p>
                     </div>
                   </div>
                 </CardContent>
@@ -249,6 +329,7 @@ export default function CheckoutPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
+              className="space-y-3"
             >
               <Button
                 type="submit"
@@ -260,15 +341,29 @@ export default function CheckoutPage() {
                 {processing ? (
                   <>
                     <div className="animate-spin mr-3">⏳</div>
-                    處理中...
+                    正在跳轉至付款頁面...
                   </>
                 ) : (
                   <>
                     <CheckCircle className="w-5 h-5 mr-2" />
-                    確認付款 {formatPrice(getTotalPrice())}
+                    前往付款 {formatPrice(getTotalPrice())}
                   </>
                 )}
               </Button>
+
+              {/* 測試按鈕（開發模式） */}
+              {process.env.NODE_ENV !== 'production' && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="lg"
+                  className="w-full text-gray-500"
+                  onClick={handleTestPayment}
+                  disabled={processing}
+                >
+                  🧪 模擬付款成功（測試用）
+                </Button>
+              )}
             </motion.div>
           </div>
         </form>
@@ -276,5 +371,3 @@ export default function CheckoutPage() {
     </div>
   )
 }
-
-
