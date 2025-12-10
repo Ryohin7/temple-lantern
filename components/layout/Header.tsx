@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { ShoppingCart, User, Menu, X, Flame } from 'lucide-react'
@@ -10,8 +10,14 @@ import { Lantern } from '../temple/Lantern'
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [mounted, setMounted] = useState(false)
   const itemCount = useCartStore(state => state.getItemCount())
   const user = useUserStore(state => state.user)
+
+  useEffect(() => {
+    setMounted(true)
+    useCartStore.persist.rehydrate()
+  }, [])
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-temple-gold-300 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 shadow-lg">
@@ -59,7 +65,7 @@ export function Header() {
             <Link href="/cart">
               <Button variant="outline" size="icon" className="relative border-temple-gold-300 hover:bg-temple-gold-50">
                 <ShoppingCart className="w-5 h-5 text-temple-red-600" />
-                {itemCount > 0 && (
+                {mounted && itemCount > 0 && (
                   <motion.span
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}

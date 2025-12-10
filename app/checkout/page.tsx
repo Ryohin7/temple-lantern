@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { CreditCard, CheckCircle, AlertCircle } from 'lucide-react'
@@ -18,6 +18,7 @@ export default function CheckoutPage() {
   const [showFireworks, setShowFireworks] = useState(false)
   const [processing, setProcessing] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState('credit_card')
+  const [mounted, setMounted] = useState(false)
   
   const [customerInfo, setCustomerInfo] = useState({
     name: '',
@@ -25,8 +26,32 @@ export default function CheckoutPage() {
     phone: '',
   })
 
+  // 確保只在客戶端執行
+  useEffect(() => {
+    setMounted(true)
+    // 客戶端 hydration
+    useCartStore.persist.rehydrate()
+  }, [])
+
+  useEffect(() => {
+    if (mounted && items.length === 0) {
+      router.push('/cart')
+    }
+  }, [mounted, items.length, router])
+
+  // 伺服器端渲染時顯示載入狀態
+  if (!mounted) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-4xl animate-bounce">🏮</div>
+          <p className="text-gray-600 mt-4">載入中...</p>
+        </div>
+      </div>
+    )
+  }
+
   if (items.length === 0) {
-    router.push('/cart')
     return null
   }
 

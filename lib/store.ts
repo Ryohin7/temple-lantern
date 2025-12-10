@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { persist, createJSONStorage } from 'zustand/middleware'
 
 // 購物車項目
 export interface CartItem {
@@ -75,6 +75,19 @@ export const useCartStore = create<CartStore>()(
     }),
     {
       name: 'temple-cart-storage',
+      storage: createJSONStorage(() => {
+        // 確保只在瀏覽器環境使用 localStorage
+        if (typeof window !== 'undefined') {
+          return localStorage
+        }
+        // SSR 時返回空的 storage
+        return {
+          getItem: () => null,
+          setItem: () => {},
+          removeItem: () => {},
+        }
+      }),
+      skipHydration: true,
     }
   )
 )

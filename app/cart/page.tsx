@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
@@ -17,6 +17,13 @@ export default function CartPage() {
   const router = useRouter()
   const { items, removeItem, updateItem, getTotalPrice, clearCart } = useCartStore()
   const [believerInfo, setBelieverInfo] = useState<{ [key: string]: any }>({})
+  const [mounted, setMounted] = useState(false)
+
+  // 確保只在客戶端執行
+  useEffect(() => {
+    setMounted(true)
+    useCartStore.persist.rehydrate()
+  }, [])
 
   const handleUpdateQuantity = (lanternId: string, newQuantity: number) => {
     if (newQuantity < 1) return
@@ -46,6 +53,18 @@ export default function CartPage() {
     }
     
     router.push('/checkout')
+  }
+
+  // 伺服器端渲染時顯示載入狀態
+  if (!mounted) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-4xl animate-bounce">🏮</div>
+          <p className="text-gray-600 mt-4">載入中...</p>
+        </div>
+      </div>
+    )
   }
 
   if (items.length === 0) {
