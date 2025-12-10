@@ -102,7 +102,7 @@ export default function EventDetailPage() {
             animate={{ opacity: 1, scale: 1 }}
             className="text-center"
           >
-            <Lantern size="xl" color="gold" animate />
+            <Lantern size="lg" color="gold" animate />
           </motion.div>
         </div>
         <div className="absolute top-4 left-4">
