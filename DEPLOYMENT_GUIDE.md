@@ -37,7 +37,7 @@ NEXT_PUBLIC_SITE_URL=https://your-domain.com
 git init
 git add .
 git commit -m "Initial commit"
-git remote add origin https://github.com/your-username/temple-lantern.git
+git remote add origin https://github.com/Ryohin7/temple-lantern.git
 git push -u origin main
 ```
 
@@ -323,4 +323,5 @@ module.exports = withSentryConfig(
 ---
 
 祝您部署順利！🙏✨
+
 

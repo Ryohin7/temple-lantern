@@ -152,3 +152,4 @@ function getCategoryLabel(category: string): string {
   return labels[category] || '祈福燈'
 }
 
+

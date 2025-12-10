@@ -85,3 +85,4 @@ export function getRandomBlessing(): string {
   return BLESSING_MESSAGES[Math.floor(Math.random() * BLESSING_MESSAGES.length)]
 }
 
+
