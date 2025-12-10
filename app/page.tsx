@@ -7,10 +7,14 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Lantern } from '@/components/temple/Lantern'
 import { CloudDecoration, DragonDecoration, LotusDecoration, IncenseSmoke } from '@/components/temple/TempleDecoration'
+import { PromoBanner } from '@/components/home/PromoBanner'
+import { PromoSection } from '@/components/home/PromoSection'
 
 export default function HomePage() {
   return (
     <div className="relative overflow-hidden">
+      {/* 廣告 Banner */}
+      <PromoBanner />
       {/* Hero Section */}
       <section className="relative min-h-[80vh] flex items-center justify-center bg-gradient-to-b from-temple-red-50 via-temple-orange-50 to-temple-gold-50 overflow-hidden">
         {/* 背景裝飾 */}
@@ -215,6 +219,9 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* 優惠專區 */}
+      <PromoSection />
 
       {/* 使用流程 */}
       <section className="py-20 bg-gradient-to-b from-temple-gold-50 to-temple-orange-50">
