@@ -97,6 +97,7 @@ export default function RegisterPage() {
         id: '1',
         email: formData.email,
         name: formData.name,
+        role: 'user',
       })
       
       // 顯示成功訊息後跳轉
@@ -120,6 +121,7 @@ export default function RegisterPage() {
         id: 'google-1',
         email: 'user@gmail.com',
         name: 'Google 用戶',
+        role: 'user',
       })
       router.push('/dashboard')
     } catch (err) {

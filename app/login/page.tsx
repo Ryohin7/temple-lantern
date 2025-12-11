@@ -43,6 +43,7 @@ export default function LoginPage() {
           id: '1',
           email: formData.email,
           name: formData.email.split('@')[0],
+          role: 'user',
         })
         router.push('/dashboard')
       } else {
@@ -64,6 +65,7 @@ export default function LoginPage() {
         id: 'google-1',
         email: 'user@gmail.com',
         name: 'Google 用戶',
+        role: 'user',
       })
       router.push('/dashboard')
     } catch (err) {
