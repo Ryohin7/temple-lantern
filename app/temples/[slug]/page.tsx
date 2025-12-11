@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
-import { MapPin, Phone, Mail, Flame, Clock, Info } from 'lucide-react'
+import { MapPin, Phone, Mail, Flame, Clock, Info, CalendarDays, Users, ArrowRight } from 'lucide-react'
+import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { LanternCard } from '@/components/temple/LanternCard'
@@ -261,8 +262,9 @@ export default function TempleDetailPage() {
             )}
           </div>
 
-          {/* Main Content - Lanterns */}
-          <div className="lg:col-span-2 space-y-6">
+          {/* Main Content - Lanterns & Events */}
+          <div className="lg:col-span-2 space-y-8">
+            {/* 點燈項目 */}
             <div>
               <h2 className="text-3xl font-temple font-bold text-temple-red-800 mb-6 flex items-center gap-3">
                 <Flame className="w-8 h-8 text-temple-gold-500" />
@@ -296,6 +298,101 @@ export default function TempleDetailPage() {
                   ))}
                 </div>
               )}
+            </div>
+
+            {/* 法會活動區塊 */}
+            <div>
+              <h2 className="text-3xl font-temple font-bold text-temple-red-800 mb-6 flex items-center gap-3">
+                <CalendarDays className="w-8 h-8 text-temple-gold-500" />
+                法會活動
+              </h2>
+              
+              {/* 模擬法會活動資料 */}
+              <div className="space-y-4">
+                {[
+                  {
+                    id: 1,
+                    title: '2025新春祈福法會',
+                    date: '2025-01-25',
+                    time: '09:00',
+                    price: 2000,
+                    originalPrice: 2500,
+                    participants: 156,
+                    maxParticipants: 300,
+                    slug: 'new-year-blessing-2025',
+                  },
+                  {
+                    id: 2,
+                    title: '元宵節點燈祈福',
+                    date: '2025-02-12',
+                    time: '18:00',
+                    price: 1500,
+                    originalPrice: 0,
+                    participants: 89,
+                    maxParticipants: 200,
+                    slug: 'yuanxiao-lantern-2025',
+                  },
+                ].map((event, i) => (
+                  <motion.div
+                    key={event.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: i * 0.1 }}
+                  >
+                    <Card className="border-2 border-temple-gold-200 hover:border-temple-gold-400 hover:shadow-lg transition-all">
+                      <CardContent className="p-6">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-4">
+                            <div className="w-16 h-16 bg-temple-gradient rounded-lg flex items-center justify-center text-3xl">
+                              🙏
+                            </div>
+                            <div>
+                              <h3 className="text-lg font-bold text-gray-900">{event.title}</h3>
+                              <div className="flex items-center gap-4 text-gray-500 text-sm mt-1">
+                                <span className="flex items-center gap-1">
+                                  <CalendarDays className="w-4 h-4" />
+                                  {event.date} {event.time}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <Users className="w-4 h-4" />
+                                  {event.participants}/{event.maxParticipants} 人
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-4">
+                            <div className="text-right">
+                              {event.originalPrice > event.price && (
+                                <div className="text-sm text-gray-400 line-through">
+                                  NT$ {event.originalPrice.toLocaleString()}
+                                </div>
+                              )}
+                              <div className="text-xl font-bold text-temple-red-600">
+                                NT$ {event.price.toLocaleString()}
+                              </div>
+                            </div>
+                            <Link href={`/events/${event.slug}`}>
+                              <Button variant="temple">
+                                立即報名
+                                <ArrowRight className="w-4 h-4 ml-2" />
+                              </Button>
+                            </Link>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                ))}
+              </div>
+
+              <div className="mt-6 text-center">
+                <Link href="/events">
+                  <Button variant="outline" className="border-temple-gold-300 hover:bg-temple-gold-50">
+                    查看更多法會活動
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                </Link>
+              </div>
             </div>
           </div>
         </div>

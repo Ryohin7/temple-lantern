@@ -17,8 +17,8 @@ const mockBanners = [
     templeName: '艋舺龍山寺',
     bgColor: 'from-red-600 to-red-800',
     active: true,
-    startDate: '2024-12-01',
-    endDate: '2025-02-15',
+    startDate: '2024-01-01',
+    endDate: '2026-12-31',
   },
   {
     id: 2,
@@ -29,8 +29,8 @@ const mockBanners = [
     templeName: '臺北行天宮',
     bgColor: 'from-orange-500 to-red-600',
     active: true,
-    startDate: '2024-12-01',
-    endDate: '2025-02-12',
+    startDate: '2024-01-01',
+    endDate: '2026-12-31',
   },
   {
     id: 3,
@@ -41,8 +41,8 @@ const mockBanners = [
     templeName: '臺北霞海城隍廟',
     bgColor: 'from-pink-500 to-rose-600',
     active: true,
-    startDate: '2024-12-01',
-    endDate: '2025-03-14',
+    startDate: '2024-01-01',
+    endDate: '2026-12-31',
   },
 ]
 
