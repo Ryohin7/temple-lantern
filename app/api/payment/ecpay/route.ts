@@ -72,7 +72,7 @@ function generateTradeDate(): string {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { orderId, amount, description, items, returnUrl, clientBackUrl } = body
+    const { orderId, amount, description, items, paymentMethod, returnUrl, clientBackUrl } = body
 
     if (!orderId || !amount || !description) {
       return NextResponse.json(
@@ -91,6 +91,17 @@ export async function POST(request: NextRequest) {
         ).join('#')
       : description
 
+    // 根據付款方式設定 ChoosePayment 參數
+    // 綠界測試商店 3002607 支援的付款方式
+    let choosePayment = 'Credit' // 預設信用卡
+    if (paymentMethod === 'atm') {
+      choosePayment = 'ATM'
+    } else if (paymentMethod === 'cvs') {
+      choosePayment = 'CVS'
+    } else if (paymentMethod === 'credit_card') {
+      choosePayment = 'Credit'
+    }
+
     // 建立付款參數
     const params: Record<string, string> = {
       MerchantID: ECPAY_CONFIG.MerchantID,
@@ -102,9 +113,19 @@ export async function POST(request: NextRequest) {
       ItemName: itemName,
       ReturnURL: returnUrl || `${process.env.NEXT_PUBLIC_SITE_URL}/api/payment/callback`,
       ClientBackURL: clientBackUrl || `${process.env.NEXT_PUBLIC_SITE_URL}/order-success?orderId=${orderId}`,
-      ChoosePayment: 'ALL',
+      ChoosePayment: choosePayment,
       EncryptType: '1',
       CustomField1: orderId, // 儲存我們的訂單編號
+    }
+
+    // 如果是 ATM，需要加上繳費期限
+    if (choosePayment === 'ATM') {
+      params.ExpireDate = '3' // 3 天內繳費
+    }
+
+    // 如果是超商代碼，需要加上繳費期限
+    if (choosePayment === 'CVS') {
+      params.StoreExpireDate = '10080' // 7 天 (以分鐘計)
     }
 
     // 產生檢查碼

@@ -5,7 +5,7 @@ import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { 
   Building2, ShoppingBag, Flame, DollarSign, Users, Settings, 
-  LogOut, Bell, Plus, TrendingUp, Calendar, Eye, Edit, Trash2, BarChart3
+  LogOut, Bell, Plus, TrendingUp, Calendar, Eye, Edit, Trash2, BarChart3, CalendarDays
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -42,6 +42,28 @@ const mockLanterns = [
   { id: 2, name: '財神燈', price: 1800, stock: 80, sales: 32, active: true },
   { id: 3, name: '平安燈', price: 1000, stock: 120, sales: 58, active: true },
   { id: 4, name: '月老燈', price: 1500, stock: 60, sales: 21, active: true },
+]
+
+// 模擬法會活動
+const mockEvents = [
+  { 
+    id: 1, 
+    title: '2025新春祈福法會', 
+    date: '2025-01-25', 
+    participants: 156, 
+    maxParticipants: 300, 
+    revenue: 312000,
+    status: 'upcoming' 
+  },
+  { 
+    id: 2, 
+    title: '元宵節點燈祈福', 
+    date: '2025-02-12', 
+    participants: 89, 
+    maxParticipants: 200, 
+    revenue: 133500,
+    status: 'upcoming' 
+  },
 ]
 
 export default function TempleAdminDashboard() {
@@ -107,8 +129,9 @@ export default function TempleAdminDashboard() {
                 <nav className="space-y-2">
                   {[
                     { id: 'overview', icon: <Building2 className="w-5 h-5" />, label: '總覽', href: null },
-                    { id: 'orders', icon: <ShoppingBag className="w-5 h-5" />, label: '訂單管理', href: null },
+                    { id: 'orders', icon: <ShoppingBag className="w-5 h-5" />, label: '訂單管理', href: '/temple-admin/orders' },
                     { id: 'lanterns', icon: <Flame className="w-5 h-5" />, label: '燈種管理', href: '/temple-admin/lanterns' },
+                    { id: 'events', icon: <CalendarDays className="w-5 h-5" />, label: '法會活動', href: '/temple-admin/events' },
                     { id: 'reports', icon: <BarChart3 className="w-5 h-5" />, label: '統計報表', href: '/temple-admin/reports' },
                     { id: 'settings', icon: <Settings className="w-5 h-5" />, label: '廟宇設定', href: '/temple-admin/settings' },
                   ].map((item) => (
@@ -244,9 +267,11 @@ export default function TempleAdminDashboard() {
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between">
                     <CardTitle className="text-lg">燈種銷售概況</CardTitle>
-                    <Button variant="outline" size="sm" onClick={() => setActiveTab('lanterns')}>
-                      管理燈種
-                    </Button>
+                    <Link href="/temple-admin/lanterns">
+                      <Button variant="outline" size="sm">
+                        管理燈種
+                      </Button>
+                    </Link>
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -259,6 +284,71 @@ export default function TempleAdminDashboard() {
                         </div>
                       ))}
                     </div>
+                  </CardContent>
+                </Card>
+
+                {/* Events Summary */}
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <CalendarDays className="w-5 h-5 text-temple-red-600" />
+                      法會報名狀況
+                    </CardTitle>
+                    <Link href="/temple-admin/events">
+                      <Button variant="outline" size="sm">
+                        管理法會
+                      </Button>
+                    </Link>
+                  </CardHeader>
+                  <CardContent>
+                    {mockEvents.length === 0 ? (
+                      <div className="text-center py-8 text-gray-500">
+                        <CalendarDays className="w-12 h-12 mx-auto mb-4 opacity-30" />
+                        <p>尚無法會活動</p>
+                        <Link href="/temple-admin/events">
+                          <Button variant="temple" size="sm" className="mt-4">
+                            <Plus className="w-4 h-4 mr-2" />
+                            建立法會
+                          </Button>
+                        </Link>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {mockEvents.map((event) => (
+                          <div 
+                            key={event.id} 
+                            className="flex items-center justify-between p-4 bg-gradient-to-r from-temple-gold-50 to-temple-orange-50 rounded-lg border border-temple-gold-200"
+                          >
+                            <div className="flex items-center gap-4">
+                              <div className="w-12 h-12 bg-temple-gradient rounded-lg flex items-center justify-center text-2xl">
+                                🙏
+                              </div>
+                              <div>
+                                <div className="font-bold text-temple-red-800">{event.title}</div>
+                                <div className="text-sm text-gray-600 flex items-center gap-2">
+                                  <Calendar className="w-4 h-4" />
+                                  {event.date}
+                                </div>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-lg font-bold text-temple-red-700">
+                                {event.participants} / {event.maxParticipants} 人
+                              </div>
+                              <div className="text-sm text-gray-500">
+                                營收 ${event.revenue.toLocaleString()}
+                              </div>
+                              <div className="w-32 h-2 bg-gray-200 rounded-full mt-2">
+                                <div 
+                                  className="h-full bg-temple-gradient rounded-full"
+                                  style={{ width: `${(event.participants / event.maxParticipants) * 100}%` }}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </motion.div>

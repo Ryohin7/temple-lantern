@@ -88,6 +88,7 @@ const mockOrders = [
 
 export default function TempleOrdersPage() {
   const [mounted, setMounted] = useState(false)
+  const [orders, setOrders] = useState(mockOrders)
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [dateFrom, setDateFrom] = useState('')
@@ -98,8 +99,28 @@ export default function TempleOrdersPage() {
     setMounted(true)
   }, [])
 
+  // 確認點燈（pending -> processing）
+  const handleConfirmLight = (orderId: string) => {
+    if (confirm('確定要將此訂單標記為「處理中」嗎？')) {
+      setOrders(orders.map(order => 
+        order.id === orderId ? { ...order, status: 'processing' } : order
+      ))
+      alert('已確認點燈，訂單狀態已更新為「處理中」')
+    }
+  }
+
+  // 完成點燈（processing -> completed）
+  const handleCompleteLight = (orderId: string) => {
+    if (confirm('確定要將此訂單標記為「已完成」嗎？')) {
+      setOrders(orders.map(order => 
+        order.id === orderId ? { ...order, status: 'completed' } : order
+      ))
+      alert('點燈已完成！')
+    }
+  }
+
   // 篩選訂單
-  const filteredOrders = mockOrders.filter(order => {
+  const filteredOrders = orders.filter(order => {
     // 搜尋
     const matchSearch = 
       order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -119,9 +140,9 @@ export default function TempleOrdersPage() {
   })
 
   // 統計
-  const pendingCount = mockOrders.filter(o => o.status === 'pending').length
-  const processingCount = mockOrders.filter(o => o.status === 'processing').length
-  const completedCount = mockOrders.filter(o => o.status === 'completed').length
+  const pendingCount = orders.filter(o => o.status === 'pending').length
+  const processingCount = orders.filter(o => o.status === 'processing').length
+  const completedCount = orders.filter(o => o.status === 'completed').length
 
   // 下載報表
   const downloadReport = (type: 'all' | 'pending') => {
@@ -403,12 +424,22 @@ export default function TempleOrdersPage() {
                           </Button>
                         </Link>
                         {order.status === 'pending' && (
-                          <Button variant="temple" size="sm">
+                          <Button 
+                            variant="temple" 
+                            size="sm"
+                            onClick={() => handleConfirmLight(order.id)}
+                          >
+                            <CheckCircle className="w-4 h-4 mr-1" />
                             確認點燈
                           </Button>
                         )}
                         {order.status === 'processing' && (
-                          <Button variant="temple" size="sm">
+                          <Button 
+                            variant="temple" 
+                            size="sm"
+                            onClick={() => handleCompleteLight(order.id)}
+                          >
+                            <CheckCircle className="w-4 h-4 mr-1" />
                             完成點燈
                           </Button>
                         )}

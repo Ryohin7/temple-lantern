@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { CreditCard, CheckCircle, AlertCircle, Store, Banknote, Calendar } from 'lucide-react'
+import { CreditCard, CheckCircle, AlertCircle, Store, Banknote } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -12,7 +12,6 @@ import { useCartStore } from '@/lib/store'
 import { formatPrice } from '@/lib/utils'
 import { FireworkEffect } from '@/components/temple/TempleDecoration'
 import { CouponInput } from '@/components/ui/coupon-input'
-import { DatePicker, TimeSlotPicker } from '@/components/ui/date-picker'
 import { type Coupon } from '@/lib/coupon'
 
 export default function CheckoutPage() {
@@ -29,10 +28,6 @@ export default function CheckoutPage() {
   // 折扣碼
   const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null)
   const [discount, setDiscount] = useState(0)
-
-  // 預約點燈
-  const [lightingDate, setLightingDate] = useState<Date | null>(null)
-  const [lightingTime, setLightingTime] = useState<string | null>(null)
   
   const [customerInfo, setCustomerInfo] = useState({
     name: '',
@@ -125,8 +120,6 @@ export default function CheckoutPage() {
           paymentMethod,
           couponCode: appliedCoupon?.code,
           discount,
-          lightingDate: lightingDate?.toISOString(),
-          lightingTime,
         }),
       })
 
@@ -239,38 +232,6 @@ export default function CheckoutPage() {
                       className="mt-1"
                     />
                   </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            {/* 預約點燈日期 */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.15 }}
-            >
-              <Card className="border-2 border-temple-gold-300 shadow-lg">
-                <CardHeader className="bg-temple-gold-50">
-                  <CardTitle className="text-2xl font-temple text-temple-red-800 flex items-center gap-2">
-                    <Calendar className="w-6 h-6" />
-                    預約點燈日期（選填）
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6 space-y-6">
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-800">
-                    💡 您可以選擇農曆吉日預約點燈，若不選擇將於付款完成後由廟方安排點燈。
-                  </div>
-                  
-                  <DatePicker
-                    selectedDate={lightingDate}
-                    onSelect={setLightingDate}
-                  />
-
-                  <TimeSlotPicker
-                    selectedTime={lightingTime}
-                    onSelect={setLightingTime}
-                    date={lightingDate}
-                  />
                 </CardContent>
               </Card>
             </motion.div>
