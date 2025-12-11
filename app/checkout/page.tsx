@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { CreditCard, CheckCircle, AlertCircle, Store, Banknote } from 'lucide-react'
+import { CreditCard, CheckCircle, AlertCircle, Store, Banknote, Calendar } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -11,6 +11,9 @@ import { Label } from '@/components/ui/label'
 import { useCartStore } from '@/lib/store'
 import { formatPrice } from '@/lib/utils'
 import { FireworkEffect } from '@/components/temple/TempleDecoration'
+import { CouponInput } from '@/components/ui/coupon-input'
+import { DatePicker, TimeSlotPicker } from '@/components/ui/date-picker'
+import { type Coupon } from '@/lib/coupon'
 
 export default function CheckoutPage() {
   const router = useRouter()
@@ -23,11 +26,23 @@ export default function CheckoutPage() {
   const [ecpayParams, setEcpayParams] = useState<Record<string, string> | null>(null)
   const [ecpayUrl, setEcpayUrl] = useState<string>('')
   
+  // 折扣碼
+  const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null)
+  const [discount, setDiscount] = useState(0)
+
+  // 預約點燈
+  const [lightingDate, setLightingDate] = useState<Date | null>(null)
+  const [lightingTime, setLightingTime] = useState<string | null>(null)
+  
   const [customerInfo, setCustomerInfo] = useState({
     name: '',
     email: '',
     phone: '',
   })
+
+  // 計算最終金額
+  const subtotal = getTotalPrice()
+  const finalAmount = Math.max(0, subtotal - discount)
 
   // 確保只在客戶端執行
   useEffect(() => {
@@ -65,6 +80,16 @@ export default function CheckoutPage() {
     return null
   }
 
+  const handleApplyCoupon = (coupon: Coupon, discountAmount: number) => {
+    setAppliedCoupon(coupon)
+    setDiscount(discountAmount)
+  }
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null)
+    setDiscount(0)
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
@@ -93,11 +118,15 @@ export default function CheckoutPage() {
         },
         body: JSON.stringify({
           orderId,
-          amount: getTotalPrice(),
+          amount: finalAmount,
           description: `台灣點燈網點燈服務`,
           items: orderItems,
           customerInfo,
           paymentMethod,
+          couponCode: appliedCoupon?.code,
+          discount,
+          lightingDate: lightingDate?.toISOString(),
+          lightingTime,
         }),
       })
 
@@ -214,6 +243,38 @@ export default function CheckoutPage() {
               </Card>
             </motion.div>
 
+            {/* 預約點燈日期 */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 }}
+            >
+              <Card className="border-2 border-temple-gold-300 shadow-lg">
+                <CardHeader className="bg-temple-gold-50">
+                  <CardTitle className="text-2xl font-temple text-temple-red-800 flex items-center gap-2">
+                    <Calendar className="w-6 h-6" />
+                    預約點燈日期（選填）
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-6 space-y-6">
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-800">
+                    💡 您可以選擇農曆吉日預約點燈，若不選擇將於付款完成後由廟方安排點燈。
+                  </div>
+                  
+                  <DatePicker
+                    selectedDate={lightingDate}
+                    onSelect={setLightingDate}
+                  />
+
+                  <TimeSlotPicker
+                    selectedTime={lightingTime}
+                    onSelect={setLightingTime}
+                    date={lightingDate}
+                  />
+                </CardContent>
+              </Card>
+            </motion.div>
+
             {/* Payment Method */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -315,10 +376,33 @@ export default function CheckoutPage() {
                       </div>
                     </div>
                   ))}
-                  
-                  <div className="flex justify-between items-center pt-4 text-2xl font-temple font-bold">
-                    <span className="text-gray-800">總金額</span>
-                    <span className="text-temple-red-700">{formatPrice(getTotalPrice())}</span>
+
+                  {/* 折扣碼輸入 */}
+                  <div className="pt-4 border-t border-temple-gold-200">
+                    <CouponInput
+                      orderAmount={subtotal}
+                      onApply={handleApplyCoupon}
+                      onRemove={handleRemoveCoupon}
+                      appliedCoupon={appliedCoupon}
+                    />
+                  </div>
+
+                  {/* 金額明細 */}
+                  <div className="pt-4 border-t border-temple-gold-200 space-y-2">
+                    <div className="flex justify-between text-gray-600">
+                      <span>小計</span>
+                      <span>{formatPrice(subtotal)}</span>
+                    </div>
+                    {discount > 0 && (
+                      <div className="flex justify-between text-green-600">
+                        <span>折扣（{appliedCoupon?.code}）</span>
+                        <span>-{formatPrice(discount)}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between items-center pt-2 text-2xl font-temple font-bold">
+                      <span className="text-gray-800">應付金額</span>
+                      <span className="text-temple-red-700">{formatPrice(finalAmount)}</span>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -346,7 +430,7 @@ export default function CheckoutPage() {
                 ) : (
                   <>
                     <CheckCircle className="w-5 h-5 mr-2" />
-                    前往付款 {formatPrice(getTotalPrice())}
+                    前往付款 {formatPrice(finalAmount)}
                   </>
                 )}
               </Button>

@@ -279,3 +279,4 @@ INSERT INTO public.lantern_products (temple_id, name, description, benefits, pri
 ON CONFLICT DO NOTHING;
 
 
+
