@@ -7,6 +7,7 @@ import { ShoppingCart, User, Menu, X, Flame, Search, ClipboardList, CalendarDays
 import { Button } from '@/components/ui/button'
 import { useCartStore, useUserStore } from '@/lib/store'
 import { Lantern } from '../temple/Lantern'
+import { ThemeToggle } from '@/components/ui/theme-toggle'
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -69,6 +70,11 @@ export function Header() {
 
           {/* Actions */}
           <div className="flex items-center gap-2">
+            {/* Theme Toggle */}
+            <div className="hidden md:block">
+              <ThemeToggle />
+            </div>
+
             {/* Search */}
             <Link href="/search">
               <Button variant="ghost" size="icon" className="text-gray-600 hover:text-temple-red-600 hover:bg-temple-gold-50">
@@ -166,6 +172,12 @@ export function Header() {
             >
               ✨ 如何點燈
             </Link>
+
+            {/* Mobile Theme Toggle */}
+            <div className="py-2">
+              <ThemeToggle />
+            </div>
+
             <div className="pt-4 border-t border-temple-gold-200">
               {user ? (
                 <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)}>
