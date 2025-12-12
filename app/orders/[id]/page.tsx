@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { ArrowLeft, Calendar, MapPin, Flame, Download, CheckCircle, Clock, Truck, User } from 'lucide-react'
+import { ArrowLeft, Calendar, MapPin, Flame, Download, CheckCircle, Clock, Truck, User, Printer } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Lantern } from '@/components/temple/Lantern'
@@ -19,18 +19,18 @@ const mockOrderDetail = {
     phone: '02-2302-5162',
   },
   items: [
-    { 
-      name: '光明燈', 
-      quantity: 1, 
+    {
+      name: '光明燈',
+      quantity: 1,
       price: 1200,
       duration: '一年',
       believer: '王大明',
       birthday: '民國 75 年 8 月 15 日',
       address: '台北市大安區...'
     },
-    { 
-      name: '平安燈', 
-      quantity: 2, 
+    {
+      name: '平安燈',
+      quantity: 2,
       price: 1000,
       duration: '一年',
       believer: '王小美、王小華',
@@ -62,10 +62,208 @@ export default function OrderDetailPage() {
   const params = useParams()
   const router = useRouter()
   const [mounted, setMounted] = useState(false)
+  const [downloading, setDownloading] = useState(false)
 
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  // 下載收據功能
+  const handleDownloadReceipt = () => {
+    setDownloading(true)
+
+    const order = mockOrderDetail
+
+    // 生成收據 HTML
+    const receiptHtml = `
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>點燈收據 - ${order.id}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Microsoft JhengHei', 'Noto Sans TC', sans-serif;
+      padding: 40px;
+      max-width: 800px;
+      margin: 0 auto;
+      color: #333;
+    }
+    .header {
+      text-align: center;
+      border-bottom: 3px double #8B0000;
+      padding-bottom: 20px;
+      margin-bottom: 30px;
+    }
+    .header h1 {
+      color: #8B0000;
+      font-size: 28px;
+      margin-bottom: 5px;
+    }
+    .header .subtitle {
+      color: #B8860B;
+      font-size: 16px;
+    }
+    .order-info {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 30px;
+      padding: 15px;
+      background: #FFF8DC;
+      border-radius: 8px;
+    }
+    .order-info div { line-height: 1.8; }
+    .section {
+      margin-bottom: 25px;
+    }
+    .section-title {
+      color: #8B0000;
+      font-size: 18px;
+      border-left: 4px solid #8B0000;
+      padding-left: 10px;
+      margin-bottom: 15px;
+    }
+    .temple-info {
+      padding: 15px;
+      background: #f9f9f9;
+      border-radius: 8px;
+    }
+    .temple-info h3 {
+      color: #8B0000;
+      margin-bottom: 10px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+    th {
+      background: #8B0000;
+      color: white;
+    }
+    .total-row {
+      font-weight: bold;
+      font-size: 18px;
+    }
+    .total-row td:last-child {
+      color: #8B0000;
+    }
+    .footer {
+      text-align: center;
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 1px solid #ddd;
+      color: #666;
+      font-size: 14px;
+    }
+    .lantern-icon {
+      font-size: 24px;
+      margin-right: 10px;
+    }
+    @media print {
+      body { padding: 20px; }
+      .no-print { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🏮 台灣點燈網</h1>
+    <div class="subtitle">點燈收據 / Receipt</div>
+  </div>
+
+  <div class="order-info">
+    <div>
+      <strong>訂單編號：</strong>${order.id}<br>
+      <strong>訂購日期：</strong>${order.date}
+    </div>
+    <div style="text-align: right;">
+      <strong>付款方式：</strong>${order.payment.method}<br>
+      <strong>付款狀態：</strong>${order.payment.status}
+    </div>
+  </div>
+
+  <div class="section">
+    <h2 class="section-title">廟宇資訊</h2>
+    <div class="temple-info">
+      <h3>${order.temple.name}</h3>
+      <p>📍 ${order.temple.address}</p>
+      <p>📞 ${order.temple.phone}</p>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2 class="section-title">點燈明細</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>燈種</th>
+          <th>點燈人</th>
+          <th>期限</th>
+          <th>數量</th>
+          <th style="text-align: right;">金額</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${order.items.map(item => `
+        <tr>
+          <td><span class="lantern-icon">🏮</span>${item.name}</td>
+          <td>${item.believer}</td>
+          <td>${item.duration}</td>
+          <td>${item.quantity}</td>
+          <td style="text-align: right;">NT$ ${(item.price * item.quantity).toLocaleString()}</td>
+        </tr>
+        `).join('')}
+        <tr class="total-row">
+          <td colspan="4" style="text-align: right;"><strong>總計</strong></td>
+          <td style="text-align: right;"><strong>NT$ ${order.total.toLocaleString()}</strong></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section">
+    <h2 class="section-title">訂購人資訊</h2>
+    <div class="temple-info">
+      <p><strong>姓名：</strong>${order.customer.name}</p>
+      <p><strong>電子郵件：</strong>${order.customer.email}</p>
+      <p><strong>聯絡電話：</strong>${order.customer.phone}</p>
+    </div>
+  </div>
+
+  <div class="footer">
+    <p>感謝您使用台灣點燈網，祝福您闔家平安、心想事成</p>
+    <p style="margin-top: 10px; font-size: 12px;">
+      此收據由系統自動產生 | 列印日期：${new Date().toLocaleString('zh-TW')}
+    </p>
+  </div>
+</body>
+</html>
+    `
+
+    // 開啟新視窗並列印
+    const printWindow = window.open('', '_blank')
+    if (printWindow) {
+      printWindow.document.write(receiptHtml)
+      printWindow.document.close()
+      printWindow.focus()
+
+      // 延遲一下確保內容載入完成
+      setTimeout(() => {
+        printWindow.print()
+        setDownloading(false)
+      }, 500)
+    } else {
+      alert('無法開啟列印視窗，請檢查瀏覽器是否阻擋彈出視窗')
+      setDownloading(false)
+    }
+  }
 
   if (!mounted) {
     return (
@@ -87,7 +285,7 @@ export default function OrderDetailPage() {
             animate={{ opacity: 1, y: 0 }}
             className="text-white"
           >
-            <Link 
+            <Link
               href="/orders"
               className="inline-flex items-center gap-2 text-white/80 hover:text-white mb-4"
             >
@@ -127,8 +325,8 @@ export default function OrderDetailPage() {
                     <div key={i} className="flex-1 relative">
                       <div className="flex flex-col items-center">
                         <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                          step.completed 
-                            ? 'bg-green-500 text-white' 
+                          step.completed
+                            ? 'bg-green-500 text-white'
                             : 'bg-gray-200 text-gray-500'
                         }`}>
                           {step.completed ? (
@@ -304,9 +502,23 @@ export default function OrderDetailPage() {
 
           {/* Actions */}
           <div className="flex justify-center gap-4 mt-8">
-            <Button variant="outline" className="border-temple-gold-400">
-              <Download className="w-4 h-4 mr-2" />
-              下載收據
+            <Button
+              variant="outline"
+              className="border-temple-gold-400"
+              onClick={handleDownloadReceipt}
+              disabled={downloading}
+            >
+              {downloading ? (
+                <>
+                  <span className="animate-spin mr-2">⏳</span>
+                  產生中...
+                </>
+              ) : (
+                <>
+                  <Download className="w-4 h-4 mr-2" />
+                  下載收據
+                </>
+              )}
             </Button>
             <Button variant="temple" asChild>
               <Link href="/temples">再次點燈</Link>
@@ -317,5 +529,3 @@ export default function OrderDetailPage() {
     </div>
   )
 }
-
-

@@ -8,48 +8,65 @@ const ECPAY_CONFIG = {
   HashIV: process.env.ECPAY_HASH_IV || 'EkRm7iFT261dpevs',
 }
 
-// URL 編碼（符合綠界規範）
-function encodeURIComponentECPay(str: string): string {
-  return encodeURIComponent(str)
-    .replace(/%20/g, '+')
-    .replace(/%2D/g, '-')
-    .replace(/%5F/g, '_')
-    .replace(/%2E/g, '.')
-    .replace(/%21/g, '!')
-    .replace(/%2A/g, '*')
-    .replace(/%28/g, '(')
-    .replace(/%29/g, ')')
+// URL 編碼（符合綠界 .NET UrlEncode 規範）
+function dotNetUrlEncode(str: string): string {
+  let encoded = encodeURIComponent(str)
+
+  // .NET UrlEncode 特殊處理
+  encoded = encoded.replace(/%20/g, '+')
+  encoded = encoded.replace(/%21/g, '!')
+  encoded = encoded.replace(/%28/g, '(')
+  encoded = encoded.replace(/%29/g, ')')
+  encoded = encoded.replace(/%2A/g, '*')
+  encoded = encoded.replace(/%2D/g, '-')
+  encoded = encoded.replace(/%2E/g, '.')
+  encoded = encoded.replace(/%5F/g, '_')
+
+  // 小寫十六進位轉大寫
+  encoded = encoded.replace(/%([0-9a-f]{2})/gi, (match, hex) => '%' + hex.toUpperCase())
+
+  return encoded
 }
 
 // 驗證檢查碼
 function verifyCheckMacValue(params: Record<string, string>): boolean {
   const receivedCheckMacValue = params.CheckMacValue
-  
+
   // 移除 CheckMacValue 後重新計算
   const paramsWithoutCheck = { ...params }
   delete paramsWithoutCheck.CheckMacValue
-  
-  // 依照字母順序排序
-  const sortedKeys = Object.keys(paramsWithoutCheck).sort()
-  
+
+  // 依照字母順序排序（不區分大小寫）
+  const sortedKeys = Object.keys(paramsWithoutCheck).sort((a, b) =>
+    a.toLowerCase().localeCompare(b.toLowerCase())
+  )
+
   // 組合成 key=value& 格式
   let checkStr = `HashKey=${ECPAY_CONFIG.HashKey}`
   sortedKeys.forEach(key => {
     checkStr += `&${key}=${paramsWithoutCheck[key]}`
   })
   checkStr += `&HashIV=${ECPAY_CONFIG.HashIV}`
-  
+
   // URL encode
-  checkStr = encodeURIComponentECPay(checkStr)
-  
+  checkStr = dotNetUrlEncode(checkStr)
+
   // 轉小寫
   checkStr = checkStr.toLowerCase()
-  
+
   // SHA256 加密
   const hash = crypto.createHash('sha256').update(checkStr).digest('hex')
-  
+
   // 轉大寫比對
-  return hash.toUpperCase() === receivedCheckMacValue
+  const calculatedCheckMacValue = hash.toUpperCase()
+
+  console.log('CheckMacValue 驗證:', {
+    received: receivedCheckMacValue,
+    calculated: calculatedCheckMacValue,
+    match: calculatedCheckMacValue === receivedCheckMacValue
+  })
+
+  return calculatedCheckMacValue === receivedCheckMacValue
 }
 
 export async function POST(request: NextRequest) {
@@ -123,5 +140,7 @@ export async function POST(request: NextRequest) {
 export async function GET() {
   return new NextResponse('ECPay Callback Endpoint OK', { status: 200 })
 }
+
+
 
 

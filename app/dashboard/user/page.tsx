@@ -3,12 +3,14 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
-import { User, ShoppingBag, Flame, Settings, LogOut, Bell, Download } from 'lucide-react'
+import { User, ShoppingBag, Flame, Settings, LogOut, Bell, Download, Save, CheckCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { Lantern } from '@/components/temple/Lantern'
 
-// 模擬用戶資料
+// 模擬用戶資料（之後會從 Supabase 讀取）
 const mockUser = {
   name: '王小明',
   email: 'user@example.com',
@@ -48,10 +50,44 @@ const mockOrders = [
 export default function UserDashboardPage() {
   const [mounted, setMounted] = useState(false)
   const [activeTab, setActiveTab] = useState('overview')
+  const [saving, setSaving] = useState(false)
+  const [saveSuccess, setSaveSuccess] = useState(false)
+
+  // 用戶資料表單狀態
+  const [userForm, setUserForm] = useState({
+    name: mockUser.name,
+    phone: mockUser.phone,
+    email: mockUser.email,
+  })
 
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  // 儲存用戶資料
+  const handleSaveProfile = async () => {
+    setSaving(true)
+    setSaveSuccess(false)
+
+    try {
+      // TODO: 連接 Supabase 更新用戶資料
+      // const { error } = await supabase
+      //   .from('users')
+      //   .update({ name: userForm.name, phone: userForm.phone })
+      //   .eq('id', userId)
+
+      // 模擬 API 請求
+      await new Promise(resolve => setTimeout(resolve, 1000))
+
+      setSaveSuccess(true)
+      setTimeout(() => setSaveSuccess(false), 3000)
+    } catch (error) {
+      console.error('儲存失敗:', error)
+      alert('儲存失敗，請稍後再試')
+    } finally {
+      setSaving(false)
+    }
+  }
 
   if (!mounted) {
     return (
@@ -351,35 +387,71 @@ export default function UserDashboardPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-6">
+                    {/* 成功訊息 */}
+                    {saveSuccess && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="p-4 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2 text-green-700"
+                      >
+                        <CheckCircle className="w-5 h-5" />
+                        <span>帳戶資料已成功更新！</span>
+                      </motion.div>
+                    )}
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <label className="text-sm font-medium text-gray-700">姓名</label>
-                        <input
+                        <Label htmlFor="userName">姓名</Label>
+                        <Input
+                          id="userName"
                           type="text"
-                          defaultValue={mockUser.name}
-                          className="mt-1 w-full px-3 py-2 border rounded-lg"
+                          value={userForm.name}
+                          onChange={(e) => setUserForm({ ...userForm, name: e.target.value })}
+                          className="mt-1"
+                          placeholder="請輸入姓名"
                         />
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-gray-700">電話</label>
-                        <input
+                        <Label htmlFor="userPhone">電話</Label>
+                        <Input
+                          id="userPhone"
                           type="tel"
-                          defaultValue={mockUser.phone}
-                          className="mt-1 w-full px-3 py-2 border rounded-lg"
+                          value={userForm.phone}
+                          onChange={(e) => setUserForm({ ...userForm, phone: e.target.value })}
+                          className="mt-1"
+                          placeholder="0912-345-678"
                         />
                       </div>
                       <div className="md:col-span-2">
-                        <label className="text-sm font-medium text-gray-700">電子郵件</label>
-                        <input
+                        <Label htmlFor="userEmail">電子郵件</Label>
+                        <Input
+                          id="userEmail"
                           type="email"
-                          defaultValue={mockUser.email}
-                          className="mt-1 w-full px-3 py-2 border rounded-lg"
+                          value={userForm.email}
+                          className="mt-1 bg-gray-50"
                           disabled
                         />
+                        <p className="text-xs text-gray-500 mt-1">電子郵件無法變更</p>
                       </div>
                     </div>
                     <div className="flex gap-4">
-                      <Button variant="temple">儲存變更</Button>
+                      <Button
+                        variant="temple"
+                        onClick={handleSaveProfile}
+                        disabled={saving}
+                      >
+                        {saving ? (
+                          <>
+                            <span className="animate-spin mr-2">⏳</span>
+                            儲存中...
+                          </>
+                        ) : (
+                          <>
+                            <Save className="w-4 h-4 mr-2" />
+                            儲存變更
+                          </>
+                        )}
+                      </Button>
                       <Button variant="outline" className="border-temple-gold-300">
                         變更密碼
                       </Button>
@@ -394,5 +466,7 @@ export default function UserDashboardPage() {
     </div>
   )
 }
+
+
 
 

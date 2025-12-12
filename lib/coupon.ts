@@ -191,3 +191,5 @@ export function calculateDiscountedPrice(
   return Math.max(0, originalPrice - discount)
 }
 
+
+
