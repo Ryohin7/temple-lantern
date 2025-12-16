@@ -45,7 +45,7 @@ export default function AdminBannersPage() {
   const fetchBanners = async () => {
     try {
       setLoading(true)
-      const res = await fetch('/api/banners')
+      const res = await fetch('/api/banners?all=true')
       if (res.ok) {
         const data = await res.json()
         setBanners(data)
@@ -88,30 +88,44 @@ export default function AdminBannersPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    // TODO: Implement API call to create/update banner
-    if (editingBanner) {
-      setBanners(banners.map(b =>
-        b.id === editingBanner.id ? { ...b, ...formData } : b
-      ))
-    } else {
-      setBanners([...banners, {
-        id: Date.now().toString(),
-        ...formData,
-        active: true,
-      }])
-    }
+    try {
+      const payload = {
+        title: formData.title,
+        subtitle: formData.subtitle,
+        link: formData.link,
+        bgColor: formData.bgColor,
+        startDate: formData.startDate,
+        endDate: formData.endDate,
+      }
 
-    setShowForm(false)
-    setEditingBanner(null)
-    setFormData({
-      title: '',
-      subtitle: '',
-      link: '',
-      templeName: '',
-      bgColor: 'from-red-600 to-red-800',
-      startDate: '',
-      endDate: '',
-    })
+      const res = await fetch('/api/banners', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+
+      if (res.ok) {
+        fetchBanners()
+        setShowForm(false)
+        setEditingBanner(null)
+        setFormData({
+          title: '',
+          subtitle: '',
+          link: '',
+          templeName: '',
+          bgColor: 'from-red-600 to-red-800',
+          startDate: '',
+          endDate: '',
+        })
+      } else {
+        const error = await res.json()
+        console.error('Failed to save banner:', error)
+        alert('儲存失敗：' + (error.error || '未知錯誤'))
+      }
+    } catch (error) {
+      console.error('Failed to save banner:', error)
+      alert('儲存失敗')
+    }
   }
 
   if (!mounted) return null

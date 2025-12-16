@@ -1,14 +1,15 @@
-import { supabase } from '@/lib/supabase'
-import { NextResponse } from 'next/server'
+import { createServerClient } from '@/lib/supabase/server'
+import { NextRequest, NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const now = new Date().toISOString()
+    const supabase = createServerClient()
+    const { searchParams } = new URL(request.url)
+    const all = searchParams.get('all') === 'true'
 
-    // 查詢有效的廣告橫幅
-    const { data: banners, error } = await supabase
+    let query = supabase
       .from('banners')
       .select(`
         id,
@@ -20,18 +21,27 @@ export async function GET() {
         is_active,
         start_date,
         end_date,
+        temple_id,
         temples (
           name
         )
       `)
-      .eq('is_active', true)
-      .lte('start_date', now)
-      .gte('end_date', now)
-      .order('display_order', { ascending: true })
+
+    if (!all) {
+      // Public API - only show active banners within date range
+      const now = new Date().toISOString()
+      query = query
+        .eq('is_active', true)
+        .lte('start_date', now)
+        .gte('end_date', now)
+    }
+
+    query = query.order('display_order', { ascending: true })
+
+    const { data: banners, error } = await query
 
     if (error) {
       console.error('Error fetching banners:', error)
-      // 如果表不存在或其他錯誤，返回空陣列而不是 500 錯誤
       return NextResponse.json([])
     }
 
@@ -42,17 +52,47 @@ export async function GET() {
       subtitle: banner.subtitle,
       image: banner.image || '',
       link: banner.link,
-      templeName: banner.temples?.[0]?.name || '台灣點燈網',
-      bgColor: banner.bg_color,
+      temple_name: banner.temples?.name || '',
+      bg_color: banner.bg_color,
       active: banner.is_active,
-      startDate: banner.start_date,
-      endDate: banner.end_date,
+      start_date: banner.start_date,
+      end_date: banner.end_date,
     })) || []
 
     return NextResponse.json(formattedBanners)
   } catch (error) {
     console.error('Unexpected error:', error)
-    // 返回空陣列而不是錯誤，讓前端優雅地處理
     return NextResponse.json([])
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const supabase = createServerClient()
+    const body = await request.json()
+
+    const { data, error } = await supabase
+      .from('banners')
+      .insert([{
+        title: body.title,
+        subtitle: body.subtitle,
+        link: body.link,
+        bg_color: body.bgColor || body.bg_color,
+        start_date: body.startDate || body.start_date,
+        end_date: body.endDate || body.end_date,
+        is_active: true,
+      }])
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Error creating banner:', error)
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+
+    return NextResponse.json(data)
+  } catch (error) {
+    console.error('Unexpected error:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
