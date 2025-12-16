@@ -15,7 +15,7 @@ export default function AdminLoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  
+
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -26,15 +26,34 @@ export default function AdminLoginPage() {
     setError('')
     setLoading(true)
 
-    // 模擬登入驗證
-    setTimeout(() => {
-      if (formData.email === 'admin@temple-lantern.tw' && formData.password === 'admin123') {
-        router.push('/admin/dashboard')
-      } else {
+    try {
+      // 使用真實的 Supabase 認證
+      const { signIn } = await import('@/lib/auth')
+      const { user, error: signInError } = await signIn(formData.email, formData.password)
+
+      if (signInError || !user) {
         setError('帳號或密碼錯誤')
+        setLoading(false)
+        return
       }
+
+      // 檢查用戶角色是否為管理員
+      if (user.role !== 'admin') {
+        setError('您沒有管理員權限')
+        // 登出非管理員用戶
+        const { signOut } = await import('@/lib/auth')
+        await signOut()
+        setLoading(false)
+        return
+      }
+
+      // 登入成功，跳轉到管理後台
+      router.push('/admin/dashboard')
+    } catch (error) {
+      console.error('Login error:', error)
+      setError('登入失敗，請稍後再試')
       setLoading(false)
-    }, 1000)
+    }
   }
 
   return (
@@ -91,7 +110,7 @@ export default function AdminLoginPage() {
                     placeholder="admin@temple-lantern.tw"
                     className="pl-10 bg-gray-700 border-gray-600 text-white placeholder:text-gray-500"
                     value={formData.email}
-                    onChange={(e) => setFormData({...formData, email: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   />
                 </div>
               </div>
@@ -108,7 +127,7 @@ export default function AdminLoginPage() {
                     placeholder="••••••••"
                     className="pl-10 pr-10 bg-gray-700 border-gray-600 text-white placeholder:text-gray-500"
                     value={formData.password}
-                    onChange={(e) => setFormData({...formData, password: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   />
                   <button
                     type="button"
@@ -143,7 +162,7 @@ export default function AdminLoginPage() {
                 🔒 此為系統管理員專用入口
               </p>
               <p className="text-gray-500 text-xs mt-1">
-                測試帳號：admin@temple-lantern.tw / admin123
+                請使用您的管理員帳號登入
               </p>
             </div>
           </CardContent>
