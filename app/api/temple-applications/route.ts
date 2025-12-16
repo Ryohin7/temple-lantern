@@ -1,9 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@supabase/supabase-js'
 
 export async function POST(request: NextRequest) {
     try {
-        const supabase = createClient()
+        // 使用 service role key 來繞過 RLS（僅用於此 API）
+        const supabase = createClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+            {
+                auth: {
+                    autoRefreshToken: false,
+                    persistSession: false
+                }
+            }
+        )
+
         const body = await request.json()
 
         // 驗證必填欄位
@@ -32,8 +43,7 @@ export async function POST(request: NextRequest) {
         }
 
         // 簡單的密碼儲存（注意：生產環境應使用 bcrypt）
-        // 暫時直接儲存，等 bcryptjs 安裝後再加密
-        const passwordHash = body.password // TODO: 使用 bcrypt.hash(body.password, 10)
+        const passwordHash = body.password
 
         // 創建申請記錄
         const { data: application, error } = await supabase
