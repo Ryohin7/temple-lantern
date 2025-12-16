@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { 
-  LayoutDashboard, Building2, Users, ShoppingBag, FileText, 
+import {
+  LayoutDashboard, Building2, Users, ShoppingBag, FileText,
   DollarSign, Settings, Image, CalendarDays, Tag,
   Save, Eye, Edit, HelpCircle, Info, BookOpen, Shield, LogOut
 } from 'lucide-react'
@@ -26,56 +26,69 @@ const navItems = [
   { icon: Settings, label: '系統設定', href: '/admin/settings' },
 ]
 
-// 模擬頁面內容
-const mockPages = [
-  {
-    id: 'how-it-works',
-    title: '如何點燈',
-    icon: BookOpen,
-    lastUpdated: '2024-12-01',
-    status: 'published',
-  },
-  {
-    id: 'faq',
-    title: '常見問題',
-    icon: HelpCircle,
-    lastUpdated: '2024-11-25',
-    status: 'published',
-  },
-  {
-    id: 'about',
-    title: '關於我們',
-    icon: Info,
-    lastUpdated: '2024-11-20',
-    status: 'published',
-  },
-  {
-    id: 'privacy',
-    title: '隱私權政策',
-    icon: Shield,
-    lastUpdated: '2024-10-15',
-    status: 'published',
-  },
-  {
-    id: 'terms',
-    title: '服務條款',
-    icon: FileText,
-    lastUpdated: '2024-10-15',
-    status: 'published',
-  },
+// 預設頁面定義
+const DEFAULT_PAGES = [
+  { slug: 'how-it-works', title: '如何點燈', icon: BookOpen },
+  { slug: 'faq', title: '常見問題', icon: HelpCircle },
+  { slug: 'about', title: '關於我們', icon: Info },
+  { slug: 'privacy', title: '隱私權政策', icon: Shield },
+  { slug: 'terms', title: '服務條款', icon: FileText },
 ]
+
+interface PageContent {
+  slug: string
+  title: string
+  updated_at?: string
+  status?: string
+}
 
 export default function AdminContentPage() {
   const [mounted, setMounted] = useState(false)
+  const [pages, setPages] = useState<PageContent[]>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     setMounted(true)
+    fetchPages()
   }, [])
 
-  if (!mounted) {
+  const fetchPages = async () => {
+    try {
+      const response = await fetch('/api/admin/content')
+      if (response.ok) {
+        const data = await response.json()
+
+        // 合併 API 數據與預設頁面
+        const mergedPages = DEFAULT_PAGES.map(defaultPage => {
+          const existingPage = data.find((p: any) => p.slug === defaultPage.slug)
+          return {
+            ...defaultPage,
+            updated_at: existingPage?.updated_at,
+            status: existingPage?.status || 'draft'
+          }
+        })
+
+        setPages(mergedPages)
+      }
+    } catch (error) {
+      console.error('Failed to fetch pages:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const getPageIcon = (slug: string) => {
+    const page = DEFAULT_PAGES.find(p => p.slug === slug)
+    return page?.icon || FileText
+  }
+
+  if (!mounted || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-4xl animate-bounce">🏮</div>
+        <div className="text-center">
+          <div className="text-4xl animate-bounce mb-2">🏮</div>
+          <p className="text-gray-500">載入中...</p>
+        </div>
       </div>
     )
   }
@@ -101,11 +114,10 @@ export default function AdminContentPage() {
                 <li key={item.href}>
                   <Link
                     href={item.href}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                      item.active
-                        ? 'bg-temple-red-50 text-temple-red-700 font-medium'
-                        : 'text-gray-600 hover:bg-gray-100'
-                    }`}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${item.active
+                      ? 'bg-temple-red-50 text-temple-red-700 font-medium'
+                      : 'text-gray-600 hover:bg-gray-100'
+                      }`}
                   >
                     <item.icon className="w-5 h-5" />
                     {item.label}
@@ -141,50 +153,60 @@ export default function AdminContentPage() {
 
           <div className="p-8">
             <div className="max-w-4xl">
-              {/* Pages List */}
               <div className="space-y-4">
-                {mockPages.map((page, index) => (
-                  <motion.div
-                    key={page.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                  >
-                    <Card className="hover:shadow-md transition-shadow">
-                      <CardContent className="p-6">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 bg-temple-gold-50 rounded-lg flex items-center justify-center text-temple-red-600">
-                              <page.icon className="w-5 h-5" />
+                {pages.map((page, index) => {
+                  const Icon = getPageIcon(page.slug)
+                  return (
+                    <motion.div
+                      key={page.slug}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                    >
+                      <Card className="hover:shadow-md transition-shadow">
+                        <CardContent className="p-6">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                              <div className="w-12 h-12 bg-temple-gold-50 rounded-lg flex items-center justify-center text-temple-red-600">
+                                <Icon className="w-5 h-5" />
+                              </div>
+                              <div>
+                                <h3 className="text-lg font-bold text-gray-900">{page.title}</h3>
+                                <p className="text-gray-500 text-sm">
+                                  {page.updated_at
+                                    ? `最後更新：${new Date(page.updated_at).toLocaleDateString()}`
+                                    : '尚未建立內容'
+                                  }
+                                </p>
+                              </div>
                             </div>
-                            <div>
-                              <h3 className="text-lg font-bold text-gray-900">{page.title}</h3>
-                              <p className="text-gray-500 text-sm">
-                                最後更新：{page.lastUpdated}
-                              </p>
+                            <div className="flex items-center gap-3">
+                              <span className={`px-3 py-1 rounded-full text-xs font-medium ${page.status === 'published'
+                                  ? 'bg-green-100 text-green-700'
+                                  : 'bg-gray-100 text-gray-700'
+                                }`}>
+                                {page.status === 'published' ? '已發布' : '草稿'}
+                              </span>
+                              {page.status === 'published' && (
+                                <Link href={`/p/${page.slug}`} target="_blank">
+                                  <Button variant="outline" size="sm">
+                                    <Eye className="w-4 h-4" />
+                                  </Button>
+                                </Link>
+                              )}
+                              <Link href={`/admin/content/${page.slug}`}>
+                                <Button variant="outline" size="sm">
+                                  <Edit className="w-4 h-4 mr-2" />
+                                  編輯
+                                </Button>
+                              </Link>
                             </div>
                           </div>
-                          <div className="flex items-center gap-3">
-                            <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
-                              已發布
-                            </span>
-                            <Link href={`/${page.id}`} target="_blank">
-                              <Button variant="outline" size="sm">
-                                <Eye className="w-4 h-4" />
-                              </Button>
-                            </Link>
-                            <Link href={`/admin/content/${page.id}`}>
-                              <Button variant="outline" size="sm">
-                                <Edit className="w-4 h-4 mr-2" />
-                                編輯
-                              </Button>
-                            </Link>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                ))}
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  )
+                })}
               </div>
 
               {/* Homepage Settings */}

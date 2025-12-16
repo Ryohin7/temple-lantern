@@ -1,58 +1,63 @@
-import { supabase } from '@/lib/supabase'
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { withAuth } from '@/lib/api-auth'
+import { createServerClient } from '@/lib/supabase/server'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET(request: Request) {
+export const GET = withAuth(async (user, request) => {
     try {
-        // TODO: 實際部署時需要根據廟宇管理員的 temple_id 過濾訂單
-        // 目前返回所有訂單供測試使用
+        const supabase = createServerClient()
         const { searchParams } = new URL(request.url)
-        const status = searchParams.get('status') || ''
         const page = parseInt(searchParams.get('page') || '1')
         const limit = parseInt(searchParams.get('limit') || '100')
         const offset = (page - 1) * limit
 
-        let query = supabase
+        // 獲取廟方管理員所屬的廟宇
+        const { data: temples } = await supabase
+            .from('temples')
+            .select('id')
+            .eq('owner_id', user.id)
+
+        if (!temples || temples.length === 0) {
+            return NextResponse.json([])
+        }
+
+        const templeIds = temples.map(t => t.id)
+
+        // 只返回該廟宇的訂單
+        const { data: orders, error } = await supabase
             .from('orders')
             .select(`
-        *,
-        users (
-          name,
-          email,
-          phone
-        ),
-        order_items (
-          id,
-          quantity,
-          price,
-          believer_name,
-          lantern_products (
-            name,
-            category
-          )
-        )
-      `, { count: 'exact' })
+                *,
+                users (
+                    name,
+                    email
+                ),
+                order_items (
+                    id,
+                    quantity,
+                    price,
+                    believer_name,
+                    birth_date,
+                    wish_text,
+                    lantern_products (
+                        name,
+                        category
+                    )
+                )
+            `)
+            .in('temple_id', templeIds)  // 只返回該廟宇的訂單
             .order('created_at', { ascending: false })
             .range(offset, offset + limit - 1)
 
-        if (status) {
-            query = query.eq('status', status)
-        }
-
-        const { data: orders, error, count } = await query
-
         if (error) {
-            console.error('Error fetching temple admin orders:', error)
-            // Return empty array for frontend compatibility
-            return NextResponse.json([], { status: 200 })
+            console.error('Failed to fetch orders:', error)
+            return NextResponse.json([])
         }
 
-        // Return flat array of orders (frontend expects this format)
         return NextResponse.json(orders || [])
     } catch (error) {
-        console.error('Unexpected error in temple-admin orders:', error)
-        // Return empty array on error
-        return NextResponse.json([], { status: 200 })
+        console.error('Temple admin orders API error:', error)
+        return NextResponse.json([])
     }
-}
+}, { requiredRole: 'temple_admin' })  // 需要廟方管理員權限

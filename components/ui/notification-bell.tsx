@@ -5,11 +5,10 @@ import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Bell, X, Check, CheckCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { 
-  mockNotifications, 
-  formatNotificationTime, 
+import {
+  formatNotificationTime,
   getNotificationIcon,
-  type Notification 
+  type Notification
 } from '@/lib/notification'
 
 interface NotificationBellProps {
@@ -18,7 +17,7 @@ interface NotificationBellProps {
 
 export function NotificationBell({ className = '' }: NotificationBellProps) {
   const [isOpen, setIsOpen] = useState(false)
-  const [notifications, setNotifications] = useState<Notification[]>(mockNotifications)
+  const [notifications, setNotifications] = useState<Notification[]>([])
   const [mounted, setMounted] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
@@ -26,6 +25,7 @@ export function NotificationBell({ className = '' }: NotificationBellProps) {
 
   useEffect(() => {
     setMounted(true)
+    fetchNotifications()
   }, [])
 
   useEffect(() => {
@@ -39,18 +39,74 @@ export function NotificationBell({ className = '' }: NotificationBellProps) {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  const markAsRead = (id: string) => {
-    setNotifications(notifications.map(n => 
+  const fetchNotifications = async () => {
+    try {
+      const response = await fetch('/api/notifications')
+      if (response.ok) {
+        const data = await response.json()
+        setNotifications(data)
+      }
+    } catch (error) {
+      console.error('Failed to fetch notifications:', error)
+    }
+  }
+
+  const markAsRead = async (id: string, link?: string) => {
+    // 樂觀更新 UI
+    setNotifications(notifications.map(n =>
       n.id === id ? { ...n, isRead: true } : n
     ))
+
+    try {
+      await fetch('/api/notifications', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notificationId: id, isRead: true })
+      })
+    } catch (error) {
+      console.error('Failed to mark notification as read:', error)
+      // 如果失敗，可以選擇回滾狀態，這裡暫時忽略
+    }
   }
 
-  const markAllAsRead = () => {
+  const markAllAsRead = async () => {
+    // 樂觀更新 UI
     setNotifications(notifications.map(n => ({ ...n, isRead: true })))
+
+    // 逐個更新（理想情況下後端應該提供批量更新 API）
+    // 這裡為了簡化，實際上可能不會真的發送所有請求，或者只發送未讀的
+    const unreadIds = notifications.filter(n => !n.isRead).map(n => n.id)
+
+    // 如果未讀數量不多，可以並行請求，否則應該有批量 API
+    // 由於我們沒有批量 API，這裡只對前幾個進行處理，或者暫時不實現後端同步
+    // TODO: 實現批量標記已讀 API
+
+    try {
+      await Promise.all(unreadIds.map(id =>
+        fetch('/api/notifications', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ notificationId: id, isRead: true })
+        })
+      ))
+    } catch (error) {
+      console.error('Failed to mark all as read:', error)
+    }
   }
 
-  const deleteNotification = (id: string) => {
+  const deleteNotification = async (id: string) => {
+    // 樂觀更新 UI
     setNotifications(notifications.filter(n => n.id !== id))
+
+    try {
+      await fetch(`/api/notifications?id=${id}`, {
+        method: 'DELETE'
+      })
+    } catch (error) {
+      console.error('Failed to delete notification:', error)
+      // 如果失敗，回滾
+      fetchNotifications()
+    }
   }
 
   if (!mounted) return null
@@ -110,9 +166,8 @@ export function NotificationBell({ className = '' }: NotificationBellProps) {
                 notifications.map((notification) => (
                   <div
                     key={notification.id}
-                    className={`relative p-4 border-b border-gray-50 hover:bg-gray-50 transition-colors ${
-                      !notification.isRead ? 'bg-temple-gold-50' : ''
-                    }`}
+                    className={`relative p-4 border-b border-gray-50 hover:bg-gray-50 transition-colors ${!notification.isRead ? 'bg-temple-gold-50' : ''
+                      }`}
                   >
                     <Link
                       href={notification.link || '#'}
@@ -125,9 +180,8 @@ export function NotificationBell({ className = '' }: NotificationBellProps) {
                         </span>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between gap-2">
-                            <h4 className={`font-medium text-sm ${
-                              !notification.isRead ? 'text-gray-900' : 'text-gray-600'
-                            }`}>
+                            <h4 className={`font-medium text-sm ${!notification.isRead ? 'text-gray-900' : 'text-gray-600'
+                              }`}>
                               {notification.title}
                             </h4>
                             {!notification.isRead && (
@@ -143,11 +197,12 @@ export function NotificationBell({ className = '' }: NotificationBellProps) {
                         </div>
                       </div>
                     </Link>
-                    
+
                     {/* 刪除按鈕 */}
                     <button
                       onClick={(e) => {
                         e.preventDefault()
+                        e.stopPropagation()
                         deleteNotification(notification.id)
                       }}
                       className="absolute top-2 right-2 p-1 text-gray-400 hover:text-red-500 opacity-0 hover:opacity-100 transition-opacity"

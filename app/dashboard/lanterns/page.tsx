@@ -3,23 +3,23 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { 
-  Flame, Calendar, Clock, MapPin, AlertTriangle, 
+import {
+  Flame, Calendar, Clock, MapPin, AlertTriangle,
   CheckCircle, RefreshCw, Download, Bell, Settings,
   ChevronRight, User
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Lantern } from '@/components/temple/Lantern'
-import { 
-  mockUserLanterns, 
+import {
   calculateLanternStatus,
-  type UserLantern 
+  type UserLantern
 } from '@/lib/notification'
 
 export default function MyLanternsPage() {
   const [mounted, setMounted] = useState(false)
   const [lanterns, setLanterns] = useState<UserLantern[]>([])
+  const [isLoading, setIsLoading] = useState(true)
   const [filter, setFilter] = useState<'all' | 'active' | 'expiring_soon' | 'expired'>('all')
   const [reminderSettings, setReminderSettings] = useState({
     enableEmail: true,
@@ -30,13 +30,22 @@ export default function MyLanternsPage() {
 
   useEffect(() => {
     setMounted(true)
-    // 更新燈種狀態
-    const updatedLanterns = mockUserLanterns.map(lantern => ({
-      ...lantern,
-      ...calculateLanternStatus(lantern.expiryDate),
-    }))
-    setLanterns(updatedLanterns as UserLantern[])
+    fetchLanterns()
   }, [])
+
+  const fetchLanterns = async () => {
+    try {
+      const response = await fetch('/api/user/lanterns')
+      if (response.ok) {
+        const data = await response.json()
+        setLanterns(data)
+      }
+    } catch (error) {
+      console.error('Failed to fetch lanterns:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   const filteredLanterns = lanterns.filter(lantern => {
     if (filter === 'all') return true
@@ -46,15 +55,18 @@ export default function MyLanternsPage() {
 
   const stats = {
     total: lanterns.length,
-    active: lanterns.filter(l => calculateLanternStatus(l.expiryDate).status === 'active').length,
-    expiringSoon: lanterns.filter(l => calculateLanternStatus(l.expiryDate).status === 'expiring_soon').length,
-    expired: lanterns.filter(l => calculateLanternStatus(l.expiryDate).status === 'expired').length,
+    active: lanterns.filter(l => l.status === 'active').length,
+    expiringSoon: lanterns.filter(l => l.status === 'expiring_soon').length,
+    expired: lanterns.filter(l => l.status === 'expired').length,
   }
 
-  if (!mounted) {
+  if (!mounted || isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-4xl animate-bounce">🏮</div>
+        <div className="text-center">
+          <div className="text-4xl animate-bounce mb-2">🏮</div>
+          <p className="text-gray-500">載入中...</p>
+        </div>
       </div>
     )
   }
@@ -81,7 +93,7 @@ export default function MyLanternsPage() {
 
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <Card 
+          <Card
             className={`cursor-pointer transition-all ${filter === 'all' ? 'ring-2 ring-temple-red-500' : ''}`}
             onClick={() => setFilter('all')}
           >
@@ -90,7 +102,7 @@ export default function MyLanternsPage() {
               <div className="text-sm text-gray-500">全部燈種</div>
             </CardContent>
           </Card>
-          <Card 
+          <Card
             className={`cursor-pointer transition-all ${filter === 'active' ? 'ring-2 ring-green-500' : ''}`}
             onClick={() => setFilter('active')}
           >
@@ -99,7 +111,7 @@ export default function MyLanternsPage() {
               <div className="text-sm text-gray-500">點亮中</div>
             </CardContent>
           </Card>
-          <Card 
+          <Card
             className={`cursor-pointer transition-all ${filter === 'expiring_soon' ? 'ring-2 ring-yellow-500' : ''}`}
             onClick={() => setFilter('expiring_soon')}
           >
@@ -108,7 +120,7 @@ export default function MyLanternsPage() {
               <div className="text-sm text-gray-500">即將到期</div>
             </CardContent>
           </Card>
-          <Card 
+          <Card
             className={`cursor-pointer transition-all ${filter === 'expired' ? 'ring-2 ring-red-500' : ''}`}
             onClick={() => setFilter('expired')}
           >
@@ -140,7 +152,7 @@ export default function MyLanternsPage() {
             ) : (
               filteredLanterns.map((lantern, index) => {
                 const { status, daysLeft } = calculateLanternStatus(lantern.expiryDate)
-                
+
                 return (
                   <motion.div
                     key={lantern.id}
@@ -148,20 +160,18 @@ export default function MyLanternsPage() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.1 }}
                   >
-                    <Card className={`overflow-hidden ${
-                      status === 'expiring_soon' ? 'border-yellow-400 border-2' :
+                    <Card className={`overflow-hidden ${status === 'expiring_soon' ? 'border-yellow-400 border-2' :
                       status === 'expired' ? 'border-red-400 border-2 opacity-75' : ''
-                    }`}>
+                      }`}>
                       <CardContent className="p-0">
                         <div className="flex">
                           {/* 燈籠圖示 */}
-                          <div className={`w-24 flex-shrink-0 flex items-center justify-center ${
-                            status === 'expired' ? 'bg-gray-100' : 'bg-temple-gradient'
-                          }`}>
-                            <Lantern 
-                              size="md" 
-                              color={status === 'expired' ? 'gold' : 'gold'} 
-                              animate={status !== 'expired'} 
+                          <div className={`w-24 flex-shrink-0 flex items-center justify-center ${status === 'expired' ? 'bg-gray-100' : 'bg-temple-gradient'
+                            }`}>
+                            <Lantern
+                              size="md"
+                              color={status === 'expired' ? 'gold' : 'gold'}
+                              animate={status !== 'expired'}
                             />
                           </div>
 
@@ -313,11 +323,10 @@ export default function MyLanternsPage() {
                             : [...reminderSettings.reminderDays, day]
                           setReminderSettings({ ...reminderSettings, reminderDays: days })
                         }}
-                        className={`px-3 py-1 rounded-full text-sm transition-colors ${
-                          reminderSettings.reminderDays.includes(day)
-                            ? 'bg-temple-red-600 text-white'
-                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                        }`}
+                        className={`px-3 py-1 rounded-full text-sm transition-colors ${reminderSettings.reminderDays.includes(day)
+                          ? 'bg-temple-red-600 text-white'
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                          }`}
                       >
                         {day} 天
                       </button>

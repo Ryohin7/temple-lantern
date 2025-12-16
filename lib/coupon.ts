@@ -19,8 +19,6 @@ export interface Coupon {
   createdAt: string
 }
 
-// V1.0 正式版：模擬資料已移除，改為從 API 獲取
-// 請實作 API 端點：/api/coupons
 export const mockCoupons: Coupon[] = [] // 已移除模擬資料
 
 // 驗證折扣碼
@@ -88,9 +86,9 @@ export function validateCouponSync(
   }
 
   if (orderAmount < coupon.minOrderAmount) {
-    return { 
-      valid: false, 
-      message: `訂單金額需滿 $${coupon.minOrderAmount} 才能使用此折扣碼` 
+    return {
+      valid: false,
+      message: `訂單金額需滿 $${coupon.minOrderAmount} 才能使用此折扣碼`
     }
   }
 
@@ -133,7 +131,7 @@ export function calculateDiscountedPrice(
   coupon: Coupon
 ): number {
   let discount = 0
-  
+
   if (coupon.type === 'percentage') {
     discount = Math.floor(originalPrice * (coupon.value / 100))
     if (coupon.maxDiscount && discount > coupon.maxDiscount) {

@@ -1,19 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { withAuth } from '@/lib/api-auth'
+import { createAdminClient } from '@/lib/supabase/server'
 
-export async function GET() {
+export const GET = withAuth(async () => {
     try {
-        // 使用 service role key 來繞過 RLS
-        const supabase = createClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-            {
-                auth: {
-                    autoRefreshToken: false,
-                    persistSession: false
-                }
-            }
-        )
+        const supabase = createAdminClient()
 
         // 獲取所有申請
         const { data: applications, error } = await supabase
@@ -32,21 +23,11 @@ export async function GET() {
         console.error('Admin temple applications API error:', error)
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
     }
-}
+}, { requiredRole: 'admin' })
 
-export async function PUT(request: NextRequest) {
+export const PUT = withAuth(async (user, request) => {
     try {
-        // 使用 service role key 來繞過 RLS
-        const supabase = createClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-            {
-                auth: {
-                    autoRefreshToken: false,
-                    persistSession: false
-                }
-            }
-        )
+        const supabase = createAdminClient()
 
         const body = await request.json()
         const { applicationId, status, rejectionReason } = body
@@ -143,9 +124,7 @@ export async function PUT(request: NextRequest) {
         console.error('Admin temple applications API error:', error)
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
     }
-}
+}, { requiredRole: 'admin' })
 
 // PATCH 方法作為 PUT 的別名
-export async function PATCH(request: NextRequest) {
-    return PUT(request)
-}
+export const PATCH = PUT

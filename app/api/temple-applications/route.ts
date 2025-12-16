@@ -1,19 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createAdminClient } from '@/lib/supabase/server'
 
 export async function POST(request: NextRequest) {
     try {
-        // 使用 service role key 來繞過 RLS
-        const supabase = createClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-            {
-                auth: {
-                    autoRefreshToken: false,
-                    persistSession: false
-                }
-            }
-        )
+        // 使用 admin client 來繞過 RLS
+        const supabase = createAdminClient()
 
         const body = await request.json()
 
@@ -77,7 +68,7 @@ export async function POST(request: NextRequest) {
             console.error('Failed to update user record:', userError)
         }
 
-        // 3. 創建申請記錄
+        // 3. 創建申請記錄（不儲存密碼）
         const { data: application, error } = await supabase
             .from('temple_applications')
             .insert({
@@ -90,7 +81,6 @@ export async function POST(request: NextRequest) {
                 admin_name: body.adminName,
                 admin_email: body.adminEmail,
                 admin_phone: body.adminPhone,
-                admin_password_hash: body.password, // 保留以備需要
                 user_id: authUser.user.id, // 關聯到創建的用戶
                 status: 'pending',
             })

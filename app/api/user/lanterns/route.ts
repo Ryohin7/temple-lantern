@@ -1,66 +1,87 @@
-import { supabase } from '@/lib/supabase'
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { withAuth } from '@/lib/api-auth'
+import { createServerClient } from '@/lib/supabase/server'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET(request: Request) {
+// 獲取用戶的燈種
+export const GET = withAuth(async (user) => {
     try {
-        // 暫時返回空陣列
-        // 實際部署時需要根據用戶 ID 查詢
-        // 需要 JOIN orders 和 order_items 表來獲取用戶的點燈記錄
+        const supabase = createServerClient()
 
-        const { data: lanterns, error } = await supabase
-            .from('order_items')
+        // 查詢用戶的訂單和燈種
+        const { data: orders, error } = await supabase
+            .from('orders')
             .select(`
-        id,
-        believer_name,
-        created_at,
-        certificate_url,
-        orders (
-          id,
-          created_at,
-          temples (
-            name,
-            slug
-          )
-        ),
-        lantern_products (
-          name,
-          category,
-          duration_months
-        )
-      `)
+                id,
+                created_at,
+                temples (
+                    name,
+                    slug
+                ),
+                order_items (
+                    id,
+                    believer_name,
+                    birth_date,
+                    birth_time,
+                    wish_text,
+                    certificate_url,
+                    created_at,
+                    lantern_products (
+                        name,
+                        category,
+                        duration_months
+                    )
+                )
+            `)
+            .eq('user_id', user.id)
+            .eq('payment_status', 'paid')
             .order('created_at', { ascending: false })
-            .limit(50)
 
         if (error) {
-            console.error('Error fetching user lanterns:', error)
-            return NextResponse.json([], { status: 200 })
+            console.error('Failed to fetch user lanterns:', error)
+            return NextResponse.json([])
         }
 
-        // 轉換資料格式
-        const formattedLanterns = lanterns?.map((item: any) => ({
-            id: item.id,
-            orderId: item.orders?.id || '',
-            believerName: item.believer_name,
-            templeName: item.orders?.temples?.name || '',
-            templeSlug: item.orders?.temples?.slug || '',
-            lanternType: item.lantern_products?.name || '',
-            lightingDate: item.created_at,
-            expiryDate: calculateExpiryDate(item.created_at, item.lantern_products?.duration_months || 12),
-            status: 'active',
-            certificateUrl: item.certificate_url
-        })) || []
+        // 轉換為燈種格式並計算到期狀態
+        const lanterns = orders?.flatMap(order =>
+            order.order_items?.map(item => {
+                const lightingDate = new Date(item.created_at)
+                const durationMonths = item.lantern_products?.duration_months || 12
+                const expiryDate = new Date(lightingDate)
+                expiryDate.setMonth(expiryDate.getMonth() + durationMonths)
 
-        return NextResponse.json(formattedLanterns)
+                const now = new Date()
+                const daysLeft = Math.ceil((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+
+                let status: 'active' | 'expiring_soon' | 'expired'
+                if (daysLeft <= 0) {
+                    status = 'expired'
+                } else if (daysLeft <= 30) {
+                    status = 'expiring_soon'
+                } else {
+                    status = 'active'
+                }
+
+                return {
+                    id: item.id,
+                    orderId: order.id,
+                    userId: user.id,
+                    templeName: order.temples?.name || '',
+                    templeSlug: order.temples?.slug || '',
+                    lanternType: item.lantern_products?.name || '',
+                    believerName: item.believer_name,
+                    lightingDate: lightingDate.toISOString().split('T')[0],
+                    expiryDate: expiryDate.toISOString().split('T')[0],
+                    status,
+                    certificateUrl: item.certificate_url
+                }
+            }) || []
+        ) || []
+
+        return NextResponse.json(lanterns)
     } catch (error) {
-        console.error('Unexpected error:', error)
-        return NextResponse.json([], { status: 200 })
+        console.error('User lanterns API error:', error)
+        return NextResponse.json([])
     }
-}
-
-function calculateExpiryDate(startDate: string, durationMonths: number): string {
-    const date = new Date(startDate)
-    date.setMonth(date.getMonth() + durationMonths)
-    return date.toISOString()
-}
+})

@@ -4,8 +4,8 @@ import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { 
-  ArrowLeft, CalendarDays, Save, Image, 
+import {
+  ArrowLeft, CalendarDays, Save, Image,
   DollarSign, FileText, Trash2
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -23,28 +23,14 @@ const temples = [
   { id: 5, name: '南鯤鯓代天府', slug: 'nankunshen' },
 ]
 
-// 模擬活動資料
-const mockEvent = {
-  id: 1,
-  title: '2025新春祈福法會',
-  slug: 'new-year-blessing-2025',
-  templeId: '1',
-  date: '2025-01-25',
-  time: '09:00',
-  description: '迎接新年，龍山寺特別舉辦新春祈福法會，由住持法師帶領誦經祈福，為信眾祈求新年平安、事業順利、闔家安康。\n\n活動內容包含：\n- 法師誦經祈福\n- 點燈祈願\n- 精美福袋贈送\n- 平安素齋',
-  price: 2000,
-  originalPrice: 2500,
-  maxParticipants: 300,
-  participants: 156,
-  imageUrl: '',
-  isActive: true,
-}
 
 export default function EditEventPage() {
   const router = useRouter()
   const params = useParams()
   const [mounted, setMounted] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [fetching, setFetching] = useState(true)
+  const [currentParticipants, setCurrentParticipants] = useState(0)
   const [formData, setFormData] = useState({
     title: '',
     slug: '',
@@ -61,45 +47,113 @@ export default function EditEventPage() {
 
   useEffect(() => {
     setMounted(true)
-    // 模擬載入活動資料
-    setFormData({
-      title: mockEvent.title,
-      slug: mockEvent.slug,
-      templeId: mockEvent.templeId,
-      date: mockEvent.date,
-      time: mockEvent.time,
-      description: mockEvent.description,
-      price: mockEvent.price,
-      originalPrice: mockEvent.originalPrice,
-      maxParticipants: mockEvent.maxParticipants,
-      imageUrl: mockEvent.imageUrl,
-      isActive: mockEvent.isActive,
-    })
-  }, [params.id])
+    const fetchEvent = async () => {
+      try {
+        const response = await fetch(`/api/admin/events/${params.id}`)
+        if (response.ok) {
+          const data = await response.json()
+          setFormData({
+            title: data.title,
+            slug: data.slug,
+            templeId: data.temple_id,
+            date: data.event_date.split('T')[0],
+            time: data.event_time,
+            description: data.description || '',
+            price: data.price,
+            originalPrice: data.original_price || 0,
+            maxParticipants: data.max_participants,
+            imageUrl: data.image_url || '',
+            isActive: data.is_active,
+          })
+          setCurrentParticipants(data.current_participants || 0)
+        } else {
+          console.error('Failed to fetch event')
+          alert('找不到活動')
+          router.push('/admin/events')
+        }
+      } catch (error) {
+        console.error('Failed to fetch event:', error)
+        alert('載入失敗')
+      } finally {
+        setFetching(false)
+      }
+    }
+
+    if (params.id) {
+      fetchEvent()
+    }
+  }, [params.id, router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
 
-    // 模擬 API 請求
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    try {
+      // 轉換數據格式以符合 API 預期
+      const apiData = {
+        title: formData.title,
+        slug: formData.slug,
+        temple_id: formData.templeId,
+        event_date: formData.date,
+        event_time: formData.time,
+        description: formData.description,
+        price: formData.price,
+        original_price: formData.originalPrice,
+        max_participants: formData.maxParticipants,
+        image_url: formData.imageUrl,
+        is_active: formData.isActive,
+      }
 
-    alert('活動已更新成功！')
-    router.push('/admin/events')
+      const response = await fetch(`/api/admin/events/${params.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(apiData),
+      })
+
+      if (response.ok) {
+        alert('活動已更新成功！')
+        router.push('/admin/events')
+      } else {
+        const error = await response.json()
+        alert(error.error || '更新失敗')
+      }
+    } catch (error) {
+      console.error('Failed to update event:', error)
+      alert('更新時發生錯誤')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleDelete = async () => {
     if (confirm('確定要刪除這個活動嗎？此操作無法復原！')) {
-      await new Promise(resolve => setTimeout(resolve, 500))
-      alert('活動已刪除')
-      router.push('/admin/events')
+      try {
+        const response = await fetch(`/api/admin/events/${params.id}`, {
+          method: 'DELETE',
+        })
+
+        if (response.ok) {
+          alert('活動已刪除')
+          router.push('/admin/events')
+        } else {
+          alert('刪除失敗')
+        }
+      } catch (error) {
+        console.error('Failed to delete event:', error)
+        alert('刪除時發生錯誤')
+      }
     }
   }
 
-  if (!mounted) {
+  if (!mounted || fetching) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-4xl animate-bounce">🏮</div>
+        <div className="text-center">
+          <div className="text-4xl animate-bounce mb-2">🏮</div>
+          <p className="text-gray-500">載入中...</p>
+        </div>
       </div>
     )
   }
@@ -126,7 +180,7 @@ export default function EditEventPage() {
             </div>
             <div className="flex items-center gap-2">
               <span className="text-sm text-gray-500">
-                目前報名：{mockEvent.participants} / {mockEvent.maxParticipants} 人
+                目前報名：{currentParticipants} / {formData.maxParticipants} 人
               </span>
             </div>
           </div>
@@ -278,13 +332,13 @@ export default function EditEventPage() {
                     <Input
                       type="number"
                       required
-                      min={mockEvent.participants}
+                      min={currentParticipants}
                       value={formData.maxParticipants}
                       onChange={(e) => setFormData({ ...formData, maxParticipants: Number(e.target.value) })}
                       className="mt-1"
                     />
                     <p className="text-xs text-gray-500 mt-1">
-                      不可低於目前報名人數 ({mockEvent.participants})
+                      不可低於目前報名人數 ({currentParticipants})
                     </p>
                   </div>
                 </div>
@@ -318,8 +372,8 @@ export default function EditEventPage() {
 
                 <div className="h-48 bg-temple-gradient rounded-lg flex items-center justify-center">
                   {formData.imageUrl ? (
-                    <img 
-                      src={formData.imageUrl} 
+                    <img
+                      src={formData.imageUrl}
                       alt="預覽"
                       className="w-full h-full object-cover rounded-lg"
                     />

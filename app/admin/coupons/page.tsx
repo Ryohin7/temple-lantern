@@ -3,16 +3,16 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { 
-  LayoutDashboard, Building2, Users, ShoppingBag, FileText, 
-  DollarSign, Settings, Image, CalendarDays, Search, 
+import {
+  LayoutDashboard, Building2, Users, ShoppingBag, FileText,
+  DollarSign, Settings, Image, CalendarDays, Search,
   Plus, Edit, Trash2, LogOut, Tag, Percent, Clock, CheckCircle, XCircle
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Lantern } from '@/components/temple/Lantern'
-import { mockCoupons, type Coupon } from '@/lib/coupon'
+import { type Coupon } from '@/lib/coupon'
 
 // 導航選單
 const navItems = [
@@ -30,7 +30,8 @@ const navItems = [
 
 export default function AdminCouponsPage() {
   const [mounted, setMounted] = useState(false)
-  const [coupons, setCoupons] = useState<Coupon[]>(mockCoupons)
+  const [coupons, setCoupons] = useState<Coupon[]>([])
+  const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [showModal, setShowModal] = useState(false)
   const [editingCoupon, setEditingCoupon] = useState<Coupon | null>(null)
@@ -51,7 +52,22 @@ export default function AdminCouponsPage() {
 
   useEffect(() => {
     setMounted(true)
+    fetchCoupons()
   }, [])
+
+  const fetchCoupons = async () => {
+    try {
+      const response = await fetch('/api/admin/coupons')
+      if (response.ok) {
+        const data = await response.json()
+        setCoupons(data)
+      }
+    } catch (error) {
+      console.error('Failed to fetch coupons:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const filteredCoupons = coupons.filter(coupon =>
     coupon.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -96,44 +112,84 @@ export default function AdminCouponsPage() {
     setShowModal(true)
   }
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm('確定要刪除此折扣碼嗎？')) {
-      setCoupons(coupons.filter(c => c.id !== id))
-      alert('折扣碼已刪除')
+      try {
+        const response = await fetch(`/api/admin/coupons?id=${id}`, {
+          method: 'DELETE',
+        })
+
+        if (response.ok) {
+          setCoupons(coupons.filter(c => c.id !== id))
+          alert('折扣碼已刪除')
+        } else {
+          alert('刪除失敗')
+        }
+      } catch (error) {
+        console.error('Failed to delete coupon:', error)
+        alert('刪除時發生錯誤')
+      }
     }
   }
 
-  const handleToggleActive = (id: string) => {
-    setCoupons(coupons.map(c => 
-      c.id === id ? { ...c, isActive: !c.isActive } : c
-    ))
+  const handleToggleActive = async (id: string) => {
+    const coupon = coupons.find(c => c.id === id)
+    if (!coupon) return
+
+    try {
+      const response = await fetch('/api/admin/coupons', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...coupon,
+          isActive: !coupon.isActive
+        }),
+      })
+
+      if (response.ok) {
+        setCoupons(coupons.map(c =>
+          c.id === id ? { ...c, isActive: !c.isActive } : c
+        ))
+      }
+    } catch (error) {
+      console.error('Failed to toggle coupon status:', error)
+    }
   }
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!formData.code || !formData.name) {
       alert('請填寫必要欄位')
       return
     }
 
-    if (editingCoupon) {
-      setCoupons(coupons.map(c => 
-        c.id === editingCoupon.id 
-          ? { ...c, ...formData, maxDiscount: formData.maxDiscount || undefined }
-          : c
-      ))
-      alert('折扣碼已更新')
-    } else {
-      const newCoupon: Coupon = {
-        id: Date.now().toString(),
-        ...formData,
-        maxDiscount: formData.maxDiscount || undefined,
-        usedCount: 0,
-        createdAt: new Date().toISOString(),
+    try {
+      const method = editingCoupon ? 'PUT' : 'POST'
+      const body = editingCoupon
+        ? { ...formData, id: editingCoupon.id }
+        : formData
+
+      const response = await fetch('/api/admin/coupons', {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      })
+
+      if (response.ok) {
+        alert(editingCoupon ? '折扣碼已更新' : '折扣碼已建立')
+        fetchCoupons()
+        setShowModal(false)
+      } else {
+        const error = await response.json()
+        alert(error.error || '儲存失敗')
       }
-      setCoupons([newCoupon, ...coupons])
-      alert('折扣碼已建立')
+    } catch (error) {
+      console.error('Failed to save coupon:', error)
+      alert('儲存時發生錯誤')
     }
-    setShowModal(false)
   }
 
   const getCouponStatus = (coupon: Coupon) => {
@@ -148,10 +204,13 @@ export default function AdminCouponsPage() {
     return { status: 'active', label: '使用中', color: 'green' }
   }
 
-  if (!mounted) {
+  if (!mounted || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-4xl animate-bounce">🏮</div>
+        <div className="text-center">
+          <div className="text-4xl animate-bounce mb-2">🏮</div>
+          <p className="text-gray-500">載入中...</p>
+        </div>
       </div>
     )
   }
@@ -177,11 +236,10 @@ export default function AdminCouponsPage() {
                 <li key={item.href}>
                   <Link
                     href={item.href}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                      item.active
-                        ? 'bg-temple-red-50 text-temple-red-700 font-medium'
-                        : 'text-gray-600 hover:bg-gray-100'
-                    }`}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${item.active
+                      ? 'bg-temple-red-50 text-temple-red-700 font-medium'
+                      : 'text-gray-600 hover:bg-gray-100'
+                      }`}
                   >
                     <item.icon className="w-5 h-5" />
                     {item.label}
@@ -273,7 +331,7 @@ export default function AdminCouponsPage() {
             <div className="space-y-4">
               {filteredCoupons.map((coupon, index) => {
                 const statusInfo = getCouponStatus(coupon)
-                
+
                 return (
                   <motion.div
                     key={coupon.id}
@@ -285,11 +343,10 @@ export default function AdminCouponsPage() {
                       <CardContent className="p-6">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-4">
-                            <div className={`w-16 h-16 rounded-lg flex items-center justify-center ${
-                              coupon.type === 'percentage' 
-                                ? 'bg-purple-100' 
-                                : 'bg-green-100'
-                            }`}>
+                            <div className={`w-16 h-16 rounded-lg flex items-center justify-center ${coupon.type === 'percentage'
+                              ? 'bg-purple-100'
+                              : 'bg-green-100'
+                              }`}>
                               {coupon.type === 'percentage' ? (
                                 <Percent className="w-8 h-8 text-purple-600" />
                               ) : (
@@ -301,13 +358,12 @@ export default function AdminCouponsPage() {
                                 <span className="font-mono text-lg font-bold text-gray-900 bg-gray-100 px-3 py-1 rounded">
                                   {coupon.code}
                                 </span>
-                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                  statusInfo.color === 'green' ? 'bg-green-100 text-green-700' :
+                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusInfo.color === 'green' ? 'bg-green-100 text-green-700' :
                                   statusInfo.color === 'red' ? 'bg-red-100 text-red-700' :
-                                  statusInfo.color === 'blue' ? 'bg-blue-100 text-blue-700' :
-                                  statusInfo.color === 'orange' ? 'bg-orange-100 text-orange-700' :
-                                  'bg-gray-100 text-gray-700'
-                                }`}>
+                                    statusInfo.color === 'blue' ? 'bg-blue-100 text-blue-700' :
+                                      statusInfo.color === 'orange' ? 'bg-orange-100 text-orange-700' :
+                                        'bg-gray-100 text-gray-700'
+                                  }`}>
                                   {statusInfo.label}
                                 </span>
                               </div>
