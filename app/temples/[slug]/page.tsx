@@ -44,11 +44,11 @@ interface LanternProduct {
 export default function TempleDetailPage() {
   const params = useParams()
   const slug = params.slug as string
-  
+
   const [temple, setTemple] = useState<Temple | null>(null)
   const [lanterns, setLanterns] = useState<LanternProduct[]>([])
   const [loading, setLoading] = useState(true)
-  
+
   const addItem = useCartStore(state => state.addItem)
 
   useEffect(() => {
@@ -91,7 +91,7 @@ export default function TempleDetailPage() {
 
   const handleAddToCart = (lantern: LanternProduct) => {
     if (!temple) return
-    
+
     addItem({
       lanternId: lantern.id,
       lanternName: lantern.name,
@@ -143,19 +143,19 @@ export default function TempleDetailPage() {
             className="object-cover"
           />
         ) : (
-          <div 
+          <div
             className="w-full h-full"
-            style={{ 
-              background: `linear-gradient(135deg, ${temple.theme_color} 0%, #ea580c 100%)` 
+            style={{
+              background: `linear-gradient(135deg, ${temple.theme_color} 0%, #ea580c 100%)`
             }}
           />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
-        
+
         {/* 裝飾 */}
         <CloudDecoration className="top-10 left-10" />
         <IncenseSmoke />
-        
+
         {/* Temple Info Overlay */}
         <div className="absolute bottom-0 left-0 right-0 p-8">
           <div className="container mx-auto">
@@ -202,7 +202,7 @@ export default function TempleDetailPage() {
                   <Info className="w-6 h-6" />
                   廟宇資訊
                 </h3>
-                
+
                 <div className="space-y-3">
                   {temple.phone && (
                     <div className="flex items-start gap-3">
@@ -215,7 +215,7 @@ export default function TempleDetailPage() {
                       </div>
                     </div>
                   )}
-                  
+
                   {temple.email && (
                     <div className="flex items-start gap-3">
                       <Mail className="w-5 h-5 text-temple-gold-600 mt-1 flex-shrink-0" />
@@ -227,7 +227,7 @@ export default function TempleDetailPage() {
                       </div>
                     </div>
                   )}
-                  
+
                   <div className="flex items-start gap-3">
                     <MapPin className="w-5 h-5 text-temple-gold-600 mt-1 flex-shrink-0" />
                     <div>
@@ -237,8 +237,8 @@ export default function TempleDetailPage() {
                   </div>
                 </div>
 
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   className="w-full border-temple-gold-300 hover:bg-temple-gold-50"
                   onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(temple.address)}`)}
                 >
@@ -270,7 +270,7 @@ export default function TempleDetailPage() {
                 <Flame className="w-8 h-8 text-temple-gold-500" />
                 點燈項目
               </h2>
-              
+
               {lanterns.length === 0 ? (
                 <Card className="border-2 border-temple-gold-200">
                   <CardContent className="p-12 text-center space-y-4">
@@ -292,107 +292,12 @@ export default function TempleDetailPage() {
                       <LanternCard
                         {...lantern}
                         onAddToCart={() => handleAddToCart(lantern)}
-                        onViewDetails={() => {}}
+                        onViewDetails={() => { }}
                       />
                     </motion.div>
                   ))}
                 </div>
               )}
-            </div>
-
-            {/* 法會活動區塊 */}
-            <div>
-              <h2 className="text-3xl font-temple font-bold text-temple-red-800 mb-6 flex items-center gap-3">
-                <CalendarDays className="w-8 h-8 text-temple-gold-500" />
-                法會活動
-              </h2>
-              
-              {/* 模擬法會活動資料 */}
-              <div className="space-y-4">
-                {[
-                  {
-                    id: 1,
-                    title: '2025新春祈福法會',
-                    date: '2025-01-25',
-                    time: '09:00',
-                    price: 2000,
-                    originalPrice: 2500,
-                    participants: 156,
-                    maxParticipants: 300,
-                    slug: 'new-year-blessing-2025',
-                  },
-                  {
-                    id: 2,
-                    title: '元宵節點燈祈福',
-                    date: '2025-02-12',
-                    time: '18:00',
-                    price: 1500,
-                    originalPrice: 0,
-                    participants: 89,
-                    maxParticipants: 200,
-                    slug: 'yuanxiao-lantern-2025',
-                  },
-                ].map((event, i) => (
-                  <motion.div
-                    key={event.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: i * 0.1 }}
-                  >
-                    <Card className="border-2 border-temple-gold-200 hover:border-temple-gold-400 hover:shadow-lg transition-all">
-                      <CardContent className="p-6">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-4">
-                            <div className="w-16 h-16 bg-temple-gradient rounded-lg flex items-center justify-center text-3xl">
-                              🙏
-                            </div>
-                            <div>
-                              <h3 className="text-lg font-bold text-gray-900">{event.title}</h3>
-                              <div className="flex items-center gap-4 text-gray-500 text-sm mt-1">
-                                <span className="flex items-center gap-1">
-                                  <CalendarDays className="w-4 h-4" />
-                                  {event.date} {event.time}
-                                </span>
-                                <span className="flex items-center gap-1">
-                                  <Users className="w-4 h-4" />
-                                  {event.participants}/{event.maxParticipants} 人
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-4">
-                            <div className="text-right">
-                              {event.originalPrice > event.price && (
-                                <div className="text-sm text-gray-400 line-through">
-                                  NT$ {event.originalPrice.toLocaleString()}
-                                </div>
-                              )}
-                              <div className="text-xl font-bold text-temple-red-600">
-                                NT$ {event.price.toLocaleString()}
-                              </div>
-                            </div>
-                            <Link href={`/events/${event.slug}`}>
-                              <Button variant="temple">
-                                立即報名
-                                <ArrowRight className="w-4 h-4 ml-2" />
-                              </Button>
-                            </Link>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                ))}
-              </div>
-
-              <div className="mt-6 text-center">
-                <Link href="/events">
-                  <Button variant="outline" className="border-temple-gold-300 hover:bg-temple-gold-50">
-                    查看更多法會活動
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </Button>
-                </Link>
-              </div>
             </div>
           </div>
         </div>
