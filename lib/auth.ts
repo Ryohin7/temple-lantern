@@ -63,17 +63,24 @@ export async function signIn(email: string, password: string) {
         })
 
         if (error) throw error
+        if (!data.user) throw new Error('Login failed')
 
-        // 獲取用戶資料
-        const { data: userData, error: userError } = await supabase
+        // 嘗試從 users 表獲取資料
+        const { data: userData } = await supabase
             .from('users')
             .select('*')
             .eq('id', data.user.id)
-            .single()
+            .maybeSingle()  // 使用 maybeSingle 而不是 single
 
-        if (userError) throw userError
+        // 如果 users 表有資料，使用它；否則從 metadata 構建
+        const user = userData || {
+            id: data.user.id,
+            email: data.user.email || '',
+            name: data.user.user_metadata?.name || '',
+            role: data.user.user_metadata?.role || 'user',
+        }
 
-        return { user: userData, error: null }
+        return { user, error: null }
     } catch (error: any) {
         return { user: null, error: error.message }
     }
