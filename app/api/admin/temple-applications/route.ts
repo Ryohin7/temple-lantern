@@ -101,10 +101,9 @@ export async function PUT(request: NextRequest) {
                 }
 
                 // 2. 創建 temples 記錄
-                const templeSlug = application.temple_name
-                    .toLowerCase()
-                    .replace(/[^a-z0-9\u4e00-\u9fa5]+/g, '-')
-                    .replace(/^-+|-+$/g, '')
+                // 使用時間戳生成 slug（避免中文字符問題）
+                const timestamp = Date.now()
+                const templeSlug = `temple-${timestamp}`
 
                 const { error: templeError } = await supabase
                     .from('temples')
