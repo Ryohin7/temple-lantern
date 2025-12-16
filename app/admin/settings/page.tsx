@@ -1,33 +1,18 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { 
-  LayoutDashboard, Building2, Users, ShoppingBag, FileText, 
-  DollarSign, Settings, Image, CalendarDays, LogOut, Save,
-  Bell, Shield, Mail, CreditCard, Globe, Palette
+import {
+  Save, Bell, Shield, CreditCard, Globe
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { Lantern } from '@/components/temple/Lantern'
-
-// 導航選單
-const navItems = [
-  { icon: LayoutDashboard, label: '儀表板', href: '/admin/dashboard' },
-  { icon: Building2, label: '廟宇管理', href: '/admin/temples' },
-  { icon: Users, label: '用戶管理', href: '/admin/users' },
-  { icon: ShoppingBag, label: '訂單管理', href: '/admin/orders' },
-  { icon: CalendarDays, label: '活動管理', href: '/admin/events' },
-  { icon: FileText, label: '內容管理', href: '/admin/content' },
-  { icon: Image, label: '廣告管理', href: '/admin/banners' },
-  { icon: DollarSign, label: '財務報表', href: '/admin/finance' },
-  { icon: Settings, label: '系統設定', href: '/admin/settings', active: true },
-]
+import AdminLayout from '@/components/admin/AdminLayout'
 
 export default function AdminSettingsPage() {
   const [mounted, setMounted] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [settings, setSettings] = useState({
     siteName: '台灣點燈網',
     siteDescription: '線上祈福點燈平台',
@@ -45,84 +30,67 @@ export default function AdminSettingsPage() {
 
   useEffect(() => {
     setMounted(true)
+    fetchSettings()
   }, [])
 
-  const handleSave = () => {
-    alert('設定已儲存！')
+  const fetchSettings = async () => {
+    try {
+      setLoading(true)
+      // TODO: 實作 /api/admin/settings API
+      // const res = await fetch('/api/admin/settings')
+      // if (res.ok) {
+      //   const data = await res.json()
+      //   setSettings(data)
+      // }
+    } catch (error) {
+      console.error('Failed to fetch settings:', error)
+    } finally {
+      setLoading(false)
+    }
   }
 
-  if (!mounted) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-4xl animate-bounce">🏮</div>
-      </div>
-    )
+  const handleSave = async () => {
+    try {
+      // TODO: 實作 /api/admin/settings API
+      // const res = await fetch('/api/admin/settings', {
+      //   method: 'PUT',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify(settings),
+      // })
+      // if (res.ok) {
+      //   alert('設定已儲存！')
+      // }
+      alert('設定已儲存！（待實作 API）')
+    } catch (error) {
+      console.error('Failed to save settings:', error)
+    }
   }
+
+  if (!mounted) return null
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="flex">
-        {/* Sidebar */}
-        <aside className="w-64 min-h-screen bg-white border-r border-gray-200 fixed left-0 top-0">
-          <div className="p-6 border-b border-gray-200">
-            <Link href="/admin/dashboard" className="flex items-center gap-3">
-              <Lantern size="sm" color="red" animate />
-              <div>
-                <h1 className="font-temple font-bold text-temple-red-700">台灣點燈網</h1>
-                <p className="text-xs text-gray-500">管理後台</p>
-              </div>
-            </Link>
+    <AdminLayout>
+      <header className="bg-white border-b border-gray-200 px-8 py-4 sticky top-0 z-10">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+              <Shield className="w-6 h-6 text-temple-red-600" />
+              系統設定
+            </h1>
+            <p className="text-gray-500 text-sm">平台全域設定與參數調整</p>
           </div>
+          <Button onClick={handleSave} variant="temple">
+            <Save className="w-4 h-4 mr-2" />
+            儲存設定
+          </Button>
+        </div>
+      </header>
 
-          <nav className="p-4">
-            <ul className="space-y-1">
-              {navItems.map((item) => (
-                <li key={item.href}>
-                  <Link
-                    href={item.href}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                      item.active
-                        ? 'bg-temple-red-50 text-temple-red-700 font-medium'
-                        : 'text-gray-600 hover:bg-gray-100'
-                    }`}
-                  >
-                    <item.icon className="w-5 h-5" />
-                    {item.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </nav>
-
-          <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
-            <Link href="/">
-              <Button variant="ghost" className="w-full justify-start text-gray-600 hover:text-temple-red-600">
-                <LogOut className="w-5 h-5 mr-3" />
-                登出系統
-              </Button>
-            </Link>
-          </div>
-        </aside>
-
-        {/* Main Content */}
-        <main className="flex-1 ml-64">
-          <header className="bg-white border-b border-gray-200 px-8 py-4 sticky top-0 z-10">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                  <Settings className="w-6 h-6 text-temple-red-600" />
-                  系統設定
-                </h1>
-                <p className="text-gray-500 text-sm">平台全域設定與參數調整</p>
-              </div>
-              <Button onClick={handleSave} variant="temple">
-                <Save className="w-4 h-4 mr-2" />
-                儲存設定
-              </Button>
-            </div>
-          </header>
-
-          <div className="p-8 space-y-8">
+      <div className="p-8 space-y-8">
+        {loading ? (
+          <p className="text-center py-8 text-gray-500">載入中...</p>
+        ) : (
+          <>
             {/* 基本設定 */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -230,7 +198,7 @@ export default function AdminSettingsPage() {
                       />
                     </div>
                   </div>
-                  
+
                   <div className="pt-4 border-t border-gray-200">
                     <h4 className="font-medium text-gray-900 mb-4">綠界金流設定</h4>
                     <div className="grid grid-cols-3 gap-4">
@@ -391,15 +359,9 @@ export default function AdminSettingsPage() {
                 </CardContent>
               </Card>
             </motion.div>
-          </div>
-        </main>
+          </>
+        )}
       </div>
-    </div>
+    </AdminLayout>
   )
 }
-
-
-
-
-
-
