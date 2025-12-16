@@ -78,12 +78,66 @@ export async function PUT(request: NextRequest) {
         }
 
         // 如果批准，創建廟宇和管理員帳號
-        if (status === 'approved') {
-            // TODO: 實作創建廟宇和管理員帳號的邏輯
-            // 1. 創建 auth user
-            // 2. 創建 users 記錄 (role = 'temple_admin')
-            // 3. 創建 temples 記錄
-            // 4. 發送通知 email
+        if (status === 'approved' && application) {
+            try {
+                // 1. 創建 Supabase Auth 用戶
+                const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
+                    email: application.admin_email,
+                    password: application.admin_password_hash,
+                    email_confirm: true,
+                })
+
+                if (authError) {
+                    console.error('Failed to create auth user:', authError)
+                    return NextResponse.json({ error: '創建用戶帳號失敗', details: authError.message }, { status: 500 })
+                }
+
+                // 2. 創建 users 記錄
+                const { error: userError } = await supabase
+                    .from('users')
+                    .insert({
+                        id: authUser.user.id,
+                        email: application.admin_email,
+                        name: application.admin_name,
+                        phone: application.admin_phone,
+                        role: 'temple_admin',
+                    })
+
+                if (userError) {
+                    console.error('Failed to create user record:', userError)
+                    await supabase.auth.admin.deleteUser(authUser.user.id)
+                    return NextResponse.json({ error: '創建用戶記錄失敗', details: userError.message }, { status: 500 })
+                }
+
+                // 3. 創建 temples 記錄
+                const templeSlug = application.temple_name.toLowerCase().replace(/[^a-z0-9\u4e00-\u9fa5]+/g, '-').replace(/^-+|-+$/g, '')
+                const { error: templeError } = await supabase
+                    .from('temples')
+                    .insert({
+                        name: application.temple_name,
+                        slug: templeSlug,
+                        address: application.address,
+                        phone: application.phone,
+                        email: application.email,
+                        main_god: application.main_god,
+                        description: application.description || '',
+                        owner_id: authUser.user.id,
+                        status: 'active',
+                        theme_color: '#DC2626',
+                    })
+
+                if (templeError) {
+                    console.error('Failed to create temple:', templeError)
+                    await supabase.from('users').delete().eq('id', authUser.user.id)
+                    await supabase.auth.admin.deleteUser(authUser.user.id)
+                    return NextResponse.json({ error: '創建廟宇記錄失敗', details: templeError.message }, { status: 500 })
+                }
+
+                console.log('Successfully created temple account:', { userId: authUser.user.id, email: application.admin_email })
+            } catch (createError) {
+                console.error('Error during account creation:', createError)
+                return NextResponse.json({ error: '創建帳號過程發生錯誤' }, { status: 500 })
+            }
         }
 
         return NextResponse.json({ success: true, application })
