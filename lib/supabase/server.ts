@@ -1,13 +1,10 @@
 import { createClient } from '@supabase/supabase-js'
-import { cookies } from 'next/headers'
 
 /**
- * 創建伺服器端 Supabase 客戶端（使用用戶 session）
+ * 創建伺服器端 Supabase 客戶端（使用 anon key）
  * 用於 Server Components 和 API Routes
  */
 export function createServerClient() {
-    const cookieStore = cookies()
-
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
@@ -15,13 +12,7 @@ export function createServerClient() {
         throw new Error('Missing Supabase environment variables')
     }
 
-    return createClient(supabaseUrl, supabaseAnonKey, {
-        cookies: {
-            get(name: string) {
-                return cookieStore.get(name)?.value
-            },
-        },
-    })
+    return createClient(supabaseUrl, supabaseAnonKey)
 }
 
 /**
