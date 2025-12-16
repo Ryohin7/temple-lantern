@@ -10,94 +10,26 @@ import { Input } from '@/components/ui/input'
 import { Lantern } from '@/components/temple/Lantern'
 import { CloudDecoration, LotusDecoration } from '@/components/temple/TempleDecoration'
 
-// 模擬法會活動資料
-const mockEvents = [
-  {
-    id: 1,
-    slug: 'new-year-blessing-2025',
-    title: '2025新春祈福法會',
-    temple: '艋舺龍山寺',
-    date: '2025-01-25',
-    time: '09:00 - 17:00',
-    location: '龍山寺正殿',
-    description: '迎接金蛇年，祈求新年平安順利、闔家安康',
-    image: '/events/new-year.jpg',
-    price: 2000,
-    participants: 156,
-    maxParticipants: 300,
-    category: '新春法會',
-    status: 'upcoming',
-    highlights: ['法師誦經祈福', '點燈祈願', '過火儀式', '領取福袋'],
-  },
-  {
-    id: 2,
-    slug: 'yuanxiao-lantern-2025',
-    title: '元宵節點燈祈福',
-    temple: '臺北行天宮',
-    date: '2025-02-12',
-    time: '18:00 - 21:00',
-    location: '行天宮廣場',
-    description: '元宵佳節，點亮希望之燈，祈求一年好運',
-    image: '/events/lantern.jpg',
-    price: 1500,
-    participants: 89,
-    maxParticipants: 200,
-    category: '元宵法會',
-    status: 'upcoming',
-    highlights: ['花燈展示', '祈福點燈', '猜燈謎', '湯圓品嚐'],
-  },
-  {
-    id: 3,
-    slug: 'qingming-memorial-2025',
-    title: '清明超度法會',
-    temple: '大甲鎮瀾宮',
-    date: '2025-04-04',
-    time: '08:00 - 16:00',
-    location: '鎮瀾宮祭祀大殿',
-    description: '清明時節，為先人祈福超度，表達孝思',
-    image: '/events/qingming.jpg',
-    price: 3000,
-    participants: 45,
-    maxParticipants: 150,
-    category: '超度法會',
-    status: 'upcoming',
-    highlights: ['誦經超度', '焚燒金紙', '祭拜儀式', '供品準備'],
-  },
-  {
-    id: 4,
-    slug: 'mazu-birthday-2025',
-    title: '媽祖聖誕慶典',
-    temple: '大甲鎮瀾宮',
-    date: '2025-04-21',
-    time: '全日',
-    location: '鎮瀾宮及周邊',
-    description: '農曆三月二十三日，恭祝天上聖母聖誕千秋',
-    image: '/events/mazu.jpg',
-    price: 2500,
-    participants: 320,
-    maxParticipants: 500,
-    category: '神明聖誕',
-    status: 'upcoming',
-    highlights: ['遶境活動', '祝壽大典', '藝文表演', '平安宴'],
-  },
-  {
-    id: 5,
-    slug: 'ghost-month-2024',
-    title: '中元普度法會',
-    temple: '臺北霞海城隍廟',
-    date: '2024-08-18',
-    time: '10:00 - 18:00',
-    location: '城隍廟前廣場',
-    description: '中元普度，超度孤魂，祈求平安',
-    image: '/events/ghost.jpg',
-    price: 1800,
-    participants: 200,
-    maxParticipants: 200,
-    category: '中元法會',
-    status: 'completed',
-    highlights: ['放水燈', '普度法會', '焰口施食'],
-  },
-]
+// V1.0 正式版：模擬資料已移除，請使用 API 獲取
+// API: GET /api/events
+
+interface Event {
+  id: number
+  slug: string
+  title: string
+  temple: string
+  date: string
+  time: string
+  location: string
+  description: string
+  image: string
+  price: number
+  participants: number
+  maxParticipants: number
+  category: string
+  status: 'upcoming' | 'completed'
+  highlights: string[]
+}
 
 const categories = ['全部', '新春法會', '元宵法會', '超度法會', '神明聖誕', '中元法會']
 
@@ -105,26 +37,46 @@ export default function EventsPage() {
   const [mounted, setMounted] = useState(false)
   const [selectedCategory, setSelectedCategory] = useState('全部')
   const [searchQuery, setSearchQuery] = useState('')
+  const [events, setEvents] = useState<Event[]>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     setMounted(true)
+    fetchEvents()
   }, [])
 
-  const filteredEvents = mockEvents.filter(event => {
+  const fetchEvents = async () => {
+    try {
+      const response = await fetch('/api/events')
+      if (response.ok) {
+        const data = await response.json()
+        setEvents(data)
+      }
+    } catch (error) {
+      console.error('Failed to fetch events:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const filteredEvents = events.filter(event => {
     const matchCategory = selectedCategory === '全部' || event.category === selectedCategory
-    const matchSearch = event.title.includes(searchQuery) || 
-                       event.temple.includes(searchQuery) ||
-                       event.description.includes(searchQuery)
+    const matchSearch = event.title.includes(searchQuery) ||
+      event.temple.includes(searchQuery) ||
+      event.description.includes(searchQuery)
     return matchCategory && matchSearch
   })
 
   const upcomingEvents = filteredEvents.filter(e => e.status === 'upcoming')
   const completedEvents = filteredEvents.filter(e => e.status === 'completed')
 
-  if (!mounted) {
+  if (!mounted || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-4xl animate-bounce">🏮</div>
+        <div className="text-center space-y-4">
+          <div className="text-4xl animate-bounce">🏮</div>
+          <p className="text-gray-600">載入法會活動中...</p>
+        </div>
       </div>
     )
   }
@@ -136,7 +88,7 @@ export default function EventsPage() {
         <div className="absolute inset-0 cloud-pattern opacity-20" />
         <CloudDecoration className="top-10 left-10" />
         <LotusDecoration className="bottom-10 right-10" />
-        
+
         <div className="container mx-auto px-4 relative z-10">
           <div className="text-center text-white space-y-6">
             <motion.div
@@ -188,11 +140,10 @@ export default function EventsPage() {
                 <button
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                    selectedCategory === cat
-                      ? 'bg-temple-red-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${selectedCategory === cat
+                    ? 'bg-temple-red-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
                 >
                   {cat}
                 </button>
@@ -278,7 +229,7 @@ export default function EventsPage() {
                         {/* Progress Bar */}
                         <div className="mb-4">
                           <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                            <div 
+                            <div
                               className="h-full bg-temple-gradient"
                               style={{ width: `${(event.participants / event.maxParticipants) * 100}%` }}
                             />
@@ -347,6 +298,7 @@ export default function EventsPage() {
     </div>
   )
 }
+
 
 
 

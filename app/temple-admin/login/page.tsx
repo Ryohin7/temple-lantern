@@ -14,22 +14,33 @@ import { Lantern } from '@/components/temple/Lantern'
 export default function TempleAdminLoginPage() {
   const router = useRouter()
   const [showPassword, setShowPassword] = useState(false)
-  const [loading, setLoading] = useState(false)
-  
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-  })
+  const [error, setError] = useState('')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
+    setError('')
 
-    // 模擬登入
-    setTimeout(() => {
+    try {
+      const { signIn } = await import('@/lib/auth')
+      const { user, error: authError } = await signIn(formData.email, formData.password)
+
+      if (authError) {
+        setError(authError)
+        return
+      }
+
+      // 檢查用戶是否為廟宇管理員
+      if (user && (user.role === 'temple_admin' || user.role === 'admin')) {
+        router.push('/temple-admin/dashboard')
+      } else {
+        setError('您沒有廟宇管理員權限')
+      }
+    } catch (err) {
+      setError('登入失敗，請稍後再試')
+    } finally {
       setLoading(false)
-      router.push('/temple-admin/dashboard')
-    }, 1500)
+    }
   }
 
   return (
@@ -74,6 +85,12 @@ export default function TempleAdminLoginPage() {
 
           <CardContent className="p-6">
             <form onSubmit={handleSubmit} className="space-y-4">
+              {error && (
+                <div className="p-3 bg-red-900/50 border border-red-700 rounded-lg text-red-200 text-sm text-center">
+                  {error}
+                </div>
+              )}
+
               {/* Email */}
               <div>
                 <Label htmlFor="email" className="text-gray-300">電子郵件</Label>
@@ -86,7 +103,7 @@ export default function TempleAdminLoginPage() {
                     placeholder="temple@example.com"
                     className="pl-10 bg-gray-700 border-gray-600 text-white placeholder:text-gray-500"
                     value={formData.email}
-                    onChange={(e) => setFormData({...formData, email: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   />
                 </div>
               </div>
@@ -103,7 +120,7 @@ export default function TempleAdminLoginPage() {
                     placeholder="••••••••"
                     className="pl-10 pr-10 bg-gray-700 border-gray-600 text-white placeholder:text-gray-500"
                     value={formData.password}
-                    onChange={(e) => setFormData({...formData, password: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   />
                   <button
                     type="button"
@@ -178,6 +195,7 @@ export default function TempleAdminLoginPage() {
     </div>
   )
 }
+
 
 
 

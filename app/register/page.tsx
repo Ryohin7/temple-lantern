@@ -82,29 +82,40 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!validateStep2()) return
 
     setLoading(true)
     setError('')
 
     try {
-      // 模擬註冊 API
-      await new Promise(resolve => setTimeout(resolve, 1500))
-      
-      // 模擬註冊成功
-      setUser({
-        id: '1',
-        email: formData.email,
-        name: formData.name,
-        role: 'user',
-      })
-      
-      // 顯示成功訊息後跳轉
-      setStep(3)
-      setTimeout(() => {
-        router.push('/dashboard')
-      }, 2000)
+      const { signUp } = await import('@/lib/auth')
+      const { user, error: authError } = await signUp(
+        formData.email,
+        formData.password,
+        formData.name,
+        'user'
+      )
+
+      if (authError) {
+        setError(authError)
+        return
+      }
+
+      if (user) {
+        setUser({
+          id: user.id,
+          email: formData.email,
+          name: formData.name,
+          role: 'user',
+        })
+
+        // 顯示成功訊息後跳轉
+        setStep(3)
+        setTimeout(() => {
+          router.push('/dashboard')
+        }, 2000)
+      }
     } catch (err) {
       setError('註冊失敗，請稍後再試')
     } finally {
@@ -115,15 +126,13 @@ export default function RegisterPage() {
   const handleGoogleRegister = async () => {
     setLoading(true)
     try {
-      // 模擬 Google OAuth 註冊
-      await new Promise(resolve => setTimeout(resolve, 1500))
-      setUser({
-        id: 'google-1',
-        email: 'user@gmail.com',
-        name: 'Google 用戶',
-        role: 'user',
-      })
-      router.push('/dashboard')
+      const { signInWithGoogle } = await import('@/lib/auth')
+      const { error: authError } = await signInWithGoogle()
+
+      if (authError) {
+        setError(authError)
+      }
+      // OAuth 會重定向，不需要手動處理
     } catch (err) {
       setError('Google 註冊失敗')
     } finally {

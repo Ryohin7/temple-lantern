@@ -87,8 +87,8 @@ export function PromoSection() {
           {activePromos.map((item, index) => {
             const remaining = item.stock - item.sold
             const progress = (item.sold / item.stock) * 100
-            const link = item.type === 'event' 
-              ? `/events/${item.eventSlug}` 
+            const link = item.type === 'event'
+              ? `/events/${item.eventSlug}`
               : `/temples/${item.templeSlug}`
 
             return (
@@ -104,7 +104,7 @@ export function PromoSection() {
                     {/* 優惠標籤 */}
                     <div className="relative h-32 bg-temple-gradient flex items-center justify-center">
                       <Lantern size="md" color="gold" animate={false} />
-                      
+
                       {/* 折扣標籤 */}
                       <div className="absolute top-2 left-2">
                         <span className="px-2 py-1 bg-red-600 text-white text-xs font-bold rounded">
@@ -114,9 +114,8 @@ export function PromoSection() {
 
                       {/* 類型標籤 */}
                       <div className="absolute top-2 right-2">
-                        <span className={`px-2 py-1 text-white text-xs font-bold rounded ${
-                          item.type === 'event' ? 'bg-blue-600' : 'bg-orange-600'
-                        }`}>
+                        <span className={`px-2 py-1 text-white text-xs font-bold rounded ${item.type === 'event' ? 'bg-blue-600' : 'bg-orange-600'
+                          }`}>
                           {item.type === 'event' ? '法會' : '點燈'}
                         </span>
                       </div>
@@ -160,11 +159,10 @@ export function PromoSection() {
                           </span>
                         </div>
                         <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                          <div 
-                            className={`h-full transition-all ${
-                              progress >= 80 ? 'bg-red-500' : 
+                          <div
+                            className={`h-full transition-all ${progress >= 80 ? 'bg-red-500' :
                               progress >= 50 ? 'bg-orange-500' : 'bg-green-500'
-                            }`}
+                              }`}
                             style={{ width: `${progress}%` }}
                           />
                         </div>

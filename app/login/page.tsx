@@ -34,20 +34,22 @@ export default function LoginPage() {
     setError('')
 
     try {
-      // 模擬登入 API
-      await new Promise(resolve => setTimeout(resolve, 1500))
-      
-      // 模擬登入成功
-      if (formData.email && formData.password) {
+      const { signIn } = await import('@/lib/auth')
+      const { user, error: authError } = await signIn(formData.email, formData.password)
+
+      if (authError) {
+        setError(authError)
+        return
+      }
+
+      if (user) {
         setUser({
-          id: '1',
-          email: formData.email,
-          name: formData.email.split('@')[0],
-          role: 'user',
+          id: user.id,
+          email: user.email,
+          name: user.name || '',
+          role: user.role,
         })
         router.push('/dashboard')
-      } else {
-        setError('請輸入 Email 和密碼')
       }
     } catch (err) {
       setError('登入失敗，請稍後再試')
@@ -59,15 +61,13 @@ export default function LoginPage() {
   const handleGoogleLogin = async () => {
     setLoading(true)
     try {
-      // 模擬 Google OAuth 登入
-      await new Promise(resolve => setTimeout(resolve, 1500))
-      setUser({
-        id: 'google-1',
-        email: 'user@gmail.com',
-        name: 'Google 用戶',
-        role: 'user',
-      })
-      router.push('/dashboard')
+      const { signInWithGoogle } = await import('@/lib/auth')
+      const { error: authError } = await signInWithGoogle()
+
+      if (authError) {
+        setError(authError)
+      }
+      // OAuth 會重定向，不需要手動處理
     } catch (err) {
       setError('Google 登入失敗')
     } finally {

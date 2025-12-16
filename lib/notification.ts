@@ -19,51 +19,11 @@ export interface ExpiryReminderSettings {
   reminderDays: number[] // 提前幾天提醒，例如 [30, 7, 1]
 }
 
-// 模擬通知資料
-export const mockNotifications: Notification[] = [
-  {
-    id: '1',
-    userId: '1',
-    type: 'lighting_complete',
-    title: '點燈完成通知',
-    message: '您在艋舺龍山寺點的光明燈已完成點燈，祝您光明滿照、平安順利！',
-    link: '/orders/ORD-001',
-    isRead: false,
-    createdAt: '2024-12-10T14:30:00',
-  },
-  {
-    id: '2',
-    userId: '1',
-    type: 'expiry_reminder',
-    title: '點燈到期提醒',
-    message: '您在臺北行天宮的事業燈將於 30 天後到期，是否需要續燈？',
-    link: '/dashboard/lanterns',
-    isRead: false,
-    createdAt: '2024-12-09T10:00:00',
-  },
-  {
-    id: '3',
-    userId: '1',
-    type: 'promotion',
-    title: '新春優惠活動',
-    message: '2025新春祈福特惠開跑！全站點燈 85 折，輸入折扣碼 NEWYEAR2025',
-    link: '/temples',
-    isRead: true,
-    createdAt: '2024-12-08T09:00:00',
-  },
-  {
-    id: '4',
-    userId: '1',
-    type: 'order_confirmed',
-    title: '訂單確認',
-    message: '您的訂單 ORD-002 已確認，廟方將於 3 日內為您點燈。',
-    link: '/orders/ORD-002',
-    isRead: true,
-    createdAt: '2024-12-07T16:20:00',
-  },
-]
+// V1.0 正式版：模擬資料已移除，請使用 API 獲取
+// API: GET /api/notifications
+export const mockNotifications: Notification[] = []
 
-// 模擬用戶燈種資料（含到期日）
+// 用戶燈種資料（含到期日）
 export interface UserLantern {
   id: string
   orderId: string
@@ -145,7 +105,7 @@ export async function sendExpiryReminder(
   settings: ExpiryReminderSettings
 ): Promise<void> {
   const { status, daysLeft } = calculateLanternStatus(lantern.expiryDate)
-  
+
   if (status === 'expired' || !settings.reminderDays.includes(daysLeft)) {
     return
   }
@@ -177,7 +137,7 @@ export function formatNotificationTime(dateStr: string): string {
   if (diffMins < 60) return `${diffMins} 分鐘前`
   if (diffHours < 24) return `${diffHours} 小時前`
   if (diffDays < 7) return `${diffDays} 天前`
-  
+
   return `${date.getMonth() + 1}/${date.getDate()}`
 }
 
@@ -193,6 +153,7 @@ export function getNotificationIcon(type: Notification['type']): string {
   }
   return icons[type]
 }
+
 
 
 

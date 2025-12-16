@@ -1,6 +1,6 @@
 {
   "name": "temple-lantern",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "台灣廟宇線上點燈平台",
   "private": true,
   "scripts": {
