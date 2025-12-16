@@ -117,7 +117,7 @@ export default function NewEventPage() {
                                     <Input
                                         id="max_participants"
                                         type="number"
-                                        value={formData.maxParticipants}
+                                        value={formData.max_participants}
                                         onChange={(e) => setFormData({ ...formData, max_participants: e.target.value })}
                                         required
                                     />
