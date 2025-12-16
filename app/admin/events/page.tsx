@@ -1,11 +1,12 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Search, Plus, Edit, Trash2, Calendar } from 'lucide-react'
+import { Search, Plus, Edit, Trash2, Calendar, Check, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import AdminLayout from '@/components/admin/AdminLayout'
+import Link from 'next/link'
 
 export default function AdminEventsPage() {
   const [mounted, setMounted] = useState(false)
@@ -41,15 +42,22 @@ export default function AdminEventsPage() {
 
   return (
     <AdminLayout>
-      <div className="p-8">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold">活動管理</h1>
-          <Button>
-            <Plus className="w-4 h-4 mr-2" />
-            新增活動
-          </Button>
+      <header className="bg-white border-b border-gray-200 px-8 py-4 sticky top-0 z-10">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">活動管理</h1>
+            <p className="text-gray-500 text-sm">管理法會活動</p>
+          </div>
+          <Link href="/admin/events/new">
+            <Button variant="temple">
+              <Plus className="w-4 h-4 mr-2" />
+              新增活動
+            </Button>
+          </Link>
         </div>
+      </header>
 
+      <div className="p-8">
         {/* Search */}
         <Card className="mb-6">
           <CardContent className="p-4">
@@ -70,7 +78,17 @@ export default function AdminEventsPage() {
           {loading ? (
             <p className="text-center py-8 text-gray-500">載入中...</p>
           ) : filteredEvents.length === 0 ? (
-            <p className="text-center py-8 text-gray-500">沒有找到活動</p>
+            <Card className="p-12 text-center">
+              <Calendar className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+              <h3 className="text-lg font-medium text-gray-700">尚無活動</h3>
+              <p className="text-gray-500 mt-1 mb-4">新增第一個法會活動</p>
+              <Link href="/admin/events/new">
+                <Button variant="temple">
+                  <Plus className="w-4 h-4 mr-2" />
+                  新增活動
+                </Button>
+              </Link>
+            </Card>
           ) : (
             filteredEvents.map((event) => (
               <Card key={event.id} className="hover:shadow-lg transition-shadow">
@@ -88,9 +106,11 @@ export default function AdminEventsPage() {
                       <p className="text-sm text-gray-700 line-clamp-2">{event.description}</p>
                     </div>
                     <div className="flex gap-2 ml-4">
-                      <Button variant="outline" size="sm">
-                        <Edit className="w-4 h-4" />
-                      </Button>
+                      <Link href={`/admin/events/${event.id}/edit`}>
+                        <Button variant="outline" size="sm">
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                      </Link>
                       <Button variant="outline" size="sm" className="text-red-600">
                         <Trash2 className="w-4 h-4" />
                       </Button>

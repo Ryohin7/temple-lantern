@@ -14,14 +14,12 @@ export default function TempleRegisterPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
-    // 廟宇資訊
     templeName: '',
     address: '',
     phone: '',
     email: '',
     mainGod: '',
     description: '',
-    // 管理員資訊
     adminName: '',
     adminEmail: '',
     adminPhone: '',
@@ -31,20 +29,35 @@ export default function TempleRegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (formData.password !== formData.confirmPassword) {
       alert('密碼與確認密碼不符')
       return
     }
 
     setLoading(true)
-    
-    // Simulate API call
-    setTimeout(() => {
+
+    try {
+      const res = await fetch('/api/temple-applications', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      })
+
+      const data = await res.json()
+
+      if (res.ok) {
+        alert(data.message || '申請已送出！我們將在 1-3 個工作天內審核您的申請，並以 Email 通知您。')
+        router.push('/')
+      } else {
+        alert(data.error || '申請提交失敗，請稍後再試')
+      }
+    } catch (error) {
+      console.error('Submit error:', error)
+      alert('申請提交失敗，請稍後再試')
+    } finally {
       setLoading(false)
-      alert('申請已送出！我們將在 1-3 個工作天內審核您的申請，並以 Email 通知您。')
-      router.push('/')
-    }, 2000)
+    }
   }
 
   const handleChange = (field: string, value: string) => {
@@ -291,7 +304,7 @@ export default function TempleRegisterPage() {
                     申請流程說明
                   </h3>
                   <ul className="space-y-2 text-sm text-blue-800">
-                    <li>• 提交申請後，我們將在 <strong>1-3 個工作天</strong>內完成審核</li>
+                    <li>• 提交申請後，我們將在 <strong>1-3 個工作天</strong> 內完成審核</li>
                     <li>• 審核通過後，將以 Email 通知並開通管理後台權限</li>
                     <li>• 您可以登入管理後台新增點燈商品、管理訂單等</li>
                     <li>• 平台將收取 <strong>訂單金額 5%</strong> 作為服務費用</li>
@@ -333,10 +346,3 @@ export default function TempleRegisterPage() {
     </div>
   )
 }
-
-
-
-
-
-
-
