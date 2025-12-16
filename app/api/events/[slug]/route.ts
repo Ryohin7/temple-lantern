@@ -8,7 +8,6 @@ export async function GET(
     { params }: { params: { slug: string } }
 ) {
     try {
-        const supabase = createClient()
         const { slug } = params
 
         const { data: event, error } = await supabase

@@ -5,8 +5,6 @@ export const dynamic = 'force-dynamic'
 
 export async function GET(request: Request) {
     try {
-        const supabase = createClient()
-
         // 獲取當前用戶
         const { data: { user }, error: authError } = await supabase.auth.getUser()
 

@@ -1,12 +1,10 @@
-import { createClient } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase'
 import { NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET() {
     try {
-        const supabase = createClient()
-
         // 查詢法會活動（需要先創建 events 表）
         // 目前返回空陣列，需要在資料庫中創建 events 表
         const { data: events, error } = await supabase
