@@ -34,6 +34,26 @@ export default function AdminEventsPage() {
     }
   }
 
+  const handleDelete = async (eventId: string) => {
+    if (!confirm('確定要刪除此活動嗎？')) return
+
+    try {
+      const res = await fetch(`/api/admin/events?id=${eventId}`, {
+        method: 'DELETE',
+      })
+
+      if (res.ok) {
+        alert('活動已刪除')
+        fetchEvents()
+      } else {
+        alert('刪除失敗')
+      }
+    } catch (error) {
+      console.error('Failed to delete event:', error)
+      alert('刪除失敗')
+    }
+  }
+
   const filteredEvents = events.filter(event =>
     event.title?.toLowerCase().includes(searchTerm.toLowerCase())
   )
@@ -111,7 +131,12 @@ export default function AdminEventsPage() {
                           <Edit className="w-4 h-4" />
                         </Button>
                       </Link>
-                      <Button variant="outline" size="sm" className="text-red-600">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-red-600"
+                        onClick={() => handleDelete(event.id)}
+                      >
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>

@@ -4,8 +4,8 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { 
-  ArrowLeft, CalendarDays, Save, Image, MapPin, 
+import {
+  ArrowLeft, CalendarDays, Save, Image, MapPin,
   DollarSign, Users, FileText
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -14,19 +14,11 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Lantern } from '@/components/temple/Lantern'
 
-// 模擬廟宇列表
-const temples = [
-  { id: 1, name: '艋舺龍山寺', slug: 'longshan-temple' },
-  { id: 2, name: '臺北行天宮', slug: 'xingtian-temple' },
-  { id: 3, name: '臺北霞海城隍廟', slug: 'xiahai-temple' },
-  { id: 4, name: '大甲鎮瀾宮', slug: 'dajia-mazu' },
-  { id: 5, name: '南鯤鯓代天府', slug: 'nankunshen' },
-]
-
 export default function NewEventPage() {
   const router = useRouter()
   const [mounted, setMounted] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [temples, setTemples] = useState<any[]>([])
   const [formData, setFormData] = useState({
     title: '',
     slug: '',
@@ -43,7 +35,20 @@ export default function NewEventPage() {
 
   useEffect(() => {
     setMounted(true)
+    fetchTemples()
   }, [])
+
+  const fetchTemples = async () => {
+    try {
+      const res = await fetch('/api/temples')
+      if (res.ok) {
+        const data = await res.json()
+        setTemples(data)
+      }
+    } catch (error) {
+      console.error('Failed to fetch temples:', error)
+    }
+  }
 
   // 自動產生 slug
   const generateSlug = (title: string) => {
@@ -65,11 +70,36 @@ export default function NewEventPage() {
     e.preventDefault()
     setLoading(true)
 
-    // 模擬 API 請求
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    try {
+      const res = await fetch('/api/admin/events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: formData.title,
+          description: formData.description,
+          temple_id: formData.templeId,
+          start_date: `${formData.date}T${formData.time}:00`,
+          end_date: `${formData.date}T${formData.time}:00`,
+          price: formData.price,
+          max_participants: formData.maxParticipants,
+          image_url: formData.imageUrl,
+          is_active: formData.isActive,
+        }),
+      })
 
-    alert('活動已建立成功！')
-    router.push('/admin/events')
+      if (res.ok) {
+        alert('活動已建立成功！')
+        router.push('/admin/events')
+      } else {
+        const error = await res.json()
+        alert(`建立失敗：${error.error}`)
+      }
+    } catch (error) {
+      console.error('Failed to create event:', error)
+      alert('建立失敗，請稍後再試')
+    } finally {
+      setLoading(false)
+    }
   }
 
   if (!mounted) {
@@ -293,8 +323,8 @@ export default function NewEventPage() {
                 {/* 預覽 */}
                 <div className="h-48 bg-temple-gradient rounded-lg flex items-center justify-center">
                   {formData.imageUrl ? (
-                    <img 
-                      src={formData.imageUrl} 
+                    <img
+                      src={formData.imageUrl}
                       alt="預覽"
                       className="w-full h-full object-cover rounded-lg"
                     />
