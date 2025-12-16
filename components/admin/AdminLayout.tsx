@@ -13,7 +13,8 @@ import {
     Image,
     DollarSign,
     Settings,
-    LogOut
+    LogOut,
+    Tag
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Lantern } from '@/components/temple/Lantern'
@@ -78,6 +79,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         { icon: Building2, label: '廟宇管理', href: '/admin/temples' },
         { icon: Users, label: '用戶管理', href: '/admin/users' },
         { icon: ShoppingBag, label: '訂單管理', href: '/admin/orders' },
+        { icon: Tag, label: '折扣碼管理', href: '/admin/coupons' },
         { icon: Calendar, label: '活動管理', href: '/admin/events' },
         { icon: FileText, label: '內容管理', href: '/admin/content' },
         { icon: Image, label: '廣告管理', href: '/admin/banners' },
@@ -110,8 +112,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                                         <Link
                                             href={item.href}
                                             className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${isActive
-                                                    ? 'bg-temple-red-50 text-temple-red-700 font-medium'
-                                                    : 'text-gray-600 hover:bg-gray-100'
+                                                ? 'bg-temple-red-50 text-temple-red-700 font-medium'
+                                                : 'text-gray-600 hover:bg-gray-100'
                                                 }`}
                                         >
                                             <Icon className="w-5 h-5" />
