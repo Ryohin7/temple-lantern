@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
 
-// GET - 獲取燈種詳情
+// GET - 獲取法會詳情
 export const GET = withAuth(async (user, request, { params }) => {
     try {
         const supabase = createServerClient()
@@ -21,9 +21,9 @@ export const GET = withAuth(async (user, request, { params }) => {
             return NextResponse.json({ error: 'Temple not found' }, { status: 404 })
         }
 
-        // 獲取燈種詳情（確保是自己廟宇的）
-        const { data: lantern, error } = await supabase
-            .from('lantern_products')
+        // 獲取法會詳情（確保是自己廟宇的）
+        const { data: event, error } = await supabase
+            .from('events')
             .select('*')
             .eq('id', id)
             .eq('temple_id', temple.id)
@@ -31,20 +31,20 @@ export const GET = withAuth(async (user, request, { params }) => {
 
         if (error) {
             if (error.code === 'PGRST116') {
-                return NextResponse.json({ error: 'Lantern not found' }, { status: 404 })
+                return NextResponse.json({ error: 'Event not found' }, { status: 404 })
             }
-            console.error('Error fetching lantern:', error)
+            console.error('Error fetching event:', error)
             return NextResponse.json({ error: error.message }, { status: 500 })
         }
 
-        return NextResponse.json(lantern)
+        return NextResponse.json(event)
     } catch (error) {
         console.error('Unexpected error:', error)
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
     }
 }, { requiredRole: 'temple_admin' })
 
-// PUT - 更新燈種
+// PUT - 更新法會
 export const PUT = withAuth(async (user, request, { params }) => {
     try {
         const supabase = createAdminClient()
@@ -62,27 +62,30 @@ export const PUT = withAuth(async (user, request, { params }) => {
             return NextResponse.json({ error: 'Temple not found' }, { status: 404 })
         }
 
-        // 確認燈種屬於該廟宇
+        // 確認法會屬於該廟宇
         const { data: existing } = await supabase
-            .from('lantern_products')
+            .from('events')
             .select('id')
             .eq('id', id)
             .eq('temple_id', temple.id)
             .single()
 
         if (!existing) {
-            return NextResponse.json({ error: 'Lantern not found or unauthorized' }, { status: 404 })
+            return NextResponse.json({ error: 'Event not found or unauthorized' }, { status: 404 })
         }
 
-        // 更新燈種
+        // 更新法會
         const { data, error } = await supabase
-            .from('lantern_products')
+            .from('events')
             .update({
-                name: body.name,
-                category: body.category,
-                price: body.price,
-                duration_months: body.duration_months,
+                title: body.title,
                 description: body.description,
+                event_date: body.event_date,
+                event_time: body.event_time,
+                location: body.location,
+                max_participants: body.max_participants,
+                registration_deadline: body.registration_deadline,
+                price: body.price,
                 image: body.image,
                 is_active: body.is_active !== undefined ? body.is_active : true,
                 updated_at: new Date().toISOString()
@@ -93,7 +96,7 @@ export const PUT = withAuth(async (user, request, { params }) => {
             .single()
 
         if (error) {
-            console.error('Error updating lantern:', error)
+            console.error('Error updating event:', error)
             return NextResponse.json({ error: error.message }, { status: 500 })
         }
 
@@ -104,7 +107,7 @@ export const PUT = withAuth(async (user, request, { params }) => {
     }
 }, { requiredRole: 'temple_admin' })
 
-// DELETE - 刪除燈種
+// DELETE - 刪除法會
 export const DELETE = withAuth(async (user, request, { params }) => {
     try {
         const supabase = createAdminClient()
@@ -121,41 +124,41 @@ export const DELETE = withAuth(async (user, request, { params }) => {
             return NextResponse.json({ error: 'Temple not found' }, { status: 404 })
         }
 
-        // 檢查是否有相關訂單
-        const { data: orders } = await supabase
-            .from('order_items')
+        // 檢查是否有報名記錄
+        const { data: registrations } = await supabase
+            .from('event_registrations')
             .select('id')
-            .eq('lantern_product_id', id)
+            .eq('event_id', id)
             .limit(1)
 
-        if (orders && orders.length > 0) {
-            // 如果有訂單，執行軟刪除
+        if (registrations && registrations.length > 0) {
+            // 如果有報名，執行軟刪除
             const { error } = await supabase
-                .from('lantern_products')
+                .from('events')
                 .update({ is_active: false, updated_at: new Date().toISOString() })
                 .eq('id', id)
                 .eq('temple_id', temple.id)
 
             if (error) {
-                console.error('Error soft deleting lantern:', error)
+                console.error('Error soft deleting event:', error)
                 return NextResponse.json({ error: error.message }, { status: 500 })
             }
 
-            return NextResponse.json({ message: 'Lantern deactivated successfully' })
+            return NextResponse.json({ message: 'Event deactivated successfully' })
         } else {
-            // 沒有訂單，可以硬刪除
+            // 沒有報名，可以硬刪除
             const { error } = await supabase
-                .from('lantern_products')
+                .from('events')
                 .delete()
                 .eq('id', id)
                 .eq('temple_id', temple.id)
 
             if (error) {
-                console.error('Error deleting lantern:', error)
+                console.error('Error deleting event:', error)
                 return NextResponse.json({ error: error.message }, { status: 500 })
             }
 
-            return NextResponse.json({ message: 'Lantern deleted successfully' })
+            return NextResponse.json({ message: 'Event deleted successfully' })
         }
     } catch (error) {
         console.error('Unexpected error:', error)

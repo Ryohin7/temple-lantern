@@ -58,17 +58,48 @@ export default function AdminBannersPage() {
   }
 
   const handleToggleActive = async (id: string) => {
-    // TODO: Implement API call to toggle banner status
-    setBanners(banners.map(b =>
-      b.id === id ? { ...b, active: !b.active } : b
-    ))
+    try {
+      const banner = banners.find(b => b.id === id)
+      if (!banner) return
+
+      const res = await fetch(`/api/banners/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ active: !banner.active }),
+      })
+
+      if (res.ok) {
+        fetchBanners()
+      } else {
+        const error = await res.json()
+        console.error('Failed to toggle banner:', error)
+        alert('切換狀態失敗')
+      }
+    } catch (error) {
+      console.error('Failed to toggle banner:', error)
+      alert('切換狀態失敗')
+    }
   }
 
   const handleDelete = async (id: string) => {
     if (!confirm('確定要刪除這個廣告嗎？')) return
 
-    // TODO: Implement API call to delete banner
-    setBanners(banners.filter(b => b.id !== id))
+    try {
+      const res = await fetch(`/api/banners/${id}`, {
+        method: 'DELETE',
+      })
+
+      if (res.ok) {
+        fetchBanners()
+      } else {
+        const error = await res.json()
+        console.error('Failed to delete banner:', error)
+        alert('刪除失敗')
+      }
+    } catch (error) {
+      console.error('Failed to delete banner:', error)
+      alert('刪除失敗')
+    }
   }
 
   const handleEdit = (banner: any) => {
@@ -98,8 +129,11 @@ export default function AdminBannersPage() {
         endDate: formData.endDate,
       }
 
-      const res = await fetch('/api/banners', {
-        method: 'POST',
+      const url = editingBanner ? `/api/banners/${editingBanner.id}` : '/api/banners'
+      const method = editingBanner ? 'PUT' : 'POST'
+
+      const res = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       })
