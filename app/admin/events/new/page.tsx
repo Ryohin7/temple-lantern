@@ -40,7 +40,7 @@ export default function NewEventPage() {
 
   const fetchTemples = async () => {
     try {
-      const res = await fetch('/api/temples')
+      const res = await fetch('/api/admin/temples')
       if (res.ok) {
         const data = await res.json()
         setTemples(data)
