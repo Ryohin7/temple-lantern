@@ -14,7 +14,12 @@ import { Lantern } from '@/components/temple/Lantern'
 export default function TempleAdminLoginPage() {
   const router = useRouter()
   const [showPassword, setShowPassword] = useState(false)
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+  })
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
