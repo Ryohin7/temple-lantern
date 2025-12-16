@@ -5,12 +5,12 @@ export const dynamic = 'force-dynamic'
 
 export async function GET(request: Request) {
     try {
-        // 暫時返回所有訂單
-        // 實際部署時需要根據廟宇管理員的 temple_id 過濾
+        // TODO: 實際部署時需要根據廟宇管理員的 temple_id 過濾訂單
+        // 目前返回所有訂單供測試使用
         const { searchParams } = new URL(request.url)
         const status = searchParams.get('status') || ''
         const page = parseInt(searchParams.get('page') || '1')
-        const limit = parseInt(searchParams.get('limit') || '20')
+        const limit = parseInt(searchParams.get('limit') || '100')
         const offset = (page - 1) * limit
 
         let query = supabase
@@ -44,21 +44,15 @@ export async function GET(request: Request) {
 
         if (error) {
             console.error('Error fetching temple admin orders:', error)
-            return NextResponse.json({ orders: [], total: 0 }, { status: 200 })
+            // Return empty array for frontend compatibility
+            return NextResponse.json([], { status: 200 })
         }
 
-        return NextResponse.json({
-            orders: orders || [],
-            total: count || 0,
-            page,
-            limit,
-            totalPages: Math.ceil((count || 0) / limit)
-        })
+        // Return flat array of orders (frontend expects this format)
+        return NextResponse.json(orders || [])
     } catch (error) {
-        console.error('Unexpected error:', error)
-        return NextResponse.json(
-            { error: 'Internal server error' },
-            { status: 500 }
-        )
+        console.error('Unexpected error in temple-admin orders:', error)
+        // Return empty array on error
+        return NextResponse.json([], { status: 200 })
     }
 }

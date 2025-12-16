@@ -5,7 +5,6 @@ import Link from 'next/link'
 import { Flame, Heart, Sparkles, TrendingUp, BookOpen, Users } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { Lantern } from '@/components/temple/Lantern'
 import { CloudDecoration, DragonDecoration, LotusDecoration, IncenseSmoke } from '@/components/temple/TempleDecoration'
 import { PromoBanner } from '@/components/home/PromoBanner'
 import { PromoSection } from '@/components/home/PromoSection'
@@ -16,45 +15,29 @@ export default function HomePage() {
       {/* 廣告 Banner */}
       <PromoBanner />
       {/* Hero Section */}
-      <section className="relative min-h-[80vh] flex items-center justify-center bg-gradient-to-b from-temple-red-50 via-temple-orange-50 to-temple-gold-50 overflow-hidden">
+      <section className="relative min-h-[70vh] md:min-h-[80vh] flex items-center justify-center bg-gradient-to-b from-temple-red-50 via-temple-orange-50 to-temple-gold-50 overflow-hidden">
         {/* 背景裝飾 */}
         <div className="absolute inset-0 cloud-pattern" />
-        <CloudDecoration className="top-10 left-10" />
-        <CloudDecoration className="top-20 right-20" />
-        <DragonDecoration className="top-10 right-10 opacity-20" />
-        <LotusDecoration className="bottom-20 left-20" />
-        
-        {/* 飄動的燈籠 */}
-        <div className="absolute inset-0">
-          <motion.div className="absolute top-20 left-[10%]">
-            <Lantern size="md" color="red" />
-          </motion.div>
-          <motion.div className="absolute top-40 right-[15%]">
-            <Lantern size="lg" color="gold" />
-          </motion.div>
-          <motion.div className="absolute bottom-32 left-[20%]">
-            <Lantern size="md" color="orange" />
-          </motion.div>
-          <motion.div className="absolute bottom-20 right-[10%]">
-            <Lantern size="sm" color="red" />
-          </motion.div>
-        </div>
+        <CloudDecoration className="hidden md:block top-10 left-10" />
+        <CloudDecoration className="hidden md:block top-20 right-20" />
+        <DragonDecoration className="hidden md:block top-10 right-10 opacity-20" />
+        <LotusDecoration className="hidden md:block bottom-20 left-20" />
 
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="max-w-4xl mx-auto text-center space-y-8">
+        <div className="container mx-auto px-4 py-8 md:py-0 relative z-10">
+          <div className="max-w-4xl mx-auto text-center space-y-6 md:space-y-8">
             {/* 主標題 */}
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
             >
-              <h1 className="text-6xl md:text-8xl font-temple font-bold text-temple-red-700 mb-4 drop-shadow-lg">
+              <h1 className="text-5xl sm:text-6xl md:text-8xl font-temple font-bold text-temple-red-700 mb-3 md:mb-4 drop-shadow-lg">
                 台灣點燈網
               </h1>
-              <div className="flex items-center justify-center gap-3 text-2xl md:text-3xl text-temple-gold-600 font-temple">
-                <Flame className="w-8 h-8" />
+              <div className="flex items-center justify-center gap-2 md:gap-3 text-xl sm:text-2xl md:text-3xl text-temple-gold-600 font-temple">
+                <Flame className="w-6 h-6 md:w-8 md:h-8" />
                 <span>心誠則靈，祈福點燈</span>
-                <Flame className="w-8 h-8" />
+                <Flame className="w-6 h-6 md:w-8 md:h-8" />
               </div>
             </motion.div>
 
@@ -63,10 +46,11 @@ export default function HomePage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
-              className="text-xl md:text-2xl text-gray-700 max-w-2xl mx-auto"
+              className="text-lg sm:text-xl md:text-2xl text-gray-700 max-w-2xl mx-auto px-4"
             >
               連結傳統與現代，讓祈福更簡單
-              <br />
+              <br className="hidden sm:block" />
+              <span className="block sm:inline"> </span>
               線上選擇廟宇、點燈種類，讓神明保佑您與家人
             </motion.p>
 
@@ -75,16 +59,16 @@ export default function HomePage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.4 }}
-              className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-8"
+              className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center items-center pt-4 md:pt-8 px-4"
             >
-              <Link href="/temples">
-                <Button variant="temple" size="xl" className="min-w-[200px]">
+              <Link href="/temples" className="w-full sm:w-auto">
+                <Button variant="temple" size="xl" className="w-full sm:w-auto min-w-[200px]">
                   <Flame className="w-5 h-5 mr-2" />
                   開始點燈祈福
                 </Button>
               </Link>
-              <Link href="/how-it-works">
-                <Button variant="outline" size="xl" className="min-w-[200px] border-temple-gold-400">
+              <Link href="/how-it-works" className="w-full sm:w-auto">
+                <Button variant="outline" size="xl" className="w-full sm:w-auto min-w-[200px] border-temple-gold-400">
                   <BookOpen className="w-5 h-5 mr-2" />
                   如何使用
                 </Button>
@@ -96,7 +80,7 @@ export default function HomePage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.8, delay: 0.6 }}
-              className="grid grid-cols-3 gap-8 pt-12 max-w-2xl mx-auto"
+              className="grid grid-cols-3 gap-4 md:gap-8 pt-8 md:pt-12 max-w-2xl mx-auto px-4"
             >
               {[
                 { number: '100+', label: '合作廟宇', icon: '🏯' },
@@ -104,11 +88,11 @@ export default function HomePage() {
                 { number: '8', label: '燈種選擇', icon: '✨' },
               ].map((stat, i) => (
                 <div key={i} className="text-center">
-                  <div className="text-4xl mb-2">{stat.icon}</div>
-                  <div className="text-3xl font-bold font-temple text-temple-red-700">
+                  <div className="text-3xl md:text-4xl mb-1 md:mb-2">{stat.icon}</div>
+                  <div className="text-2xl md:text-3xl font-bold font-temple text-temple-red-700">
                     {stat.number}
                   </div>
-                  <div className="text-sm text-gray-600 mt-1">{stat.label}</div>
+                  <div className="text-xs md:text-sm text-gray-600 mt-1">{stat.label}</div>
                 </div>
               ))}
             </motion.div>
@@ -120,18 +104,18 @@ export default function HomePage() {
       </section>
 
       {/* 燈種介紹 */}
-      <section className="py-20 bg-white">
+      <section className="py-12 md:py-20 bg-white">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-temple font-bold text-temple-red-800 mb-4">
+          <div className="text-center mb-8 md:mb-12">
+            <h2 className="text-3xl md:text-4xl font-temple font-bold text-temple-red-800 mb-3 md:mb-4">
               各式燈種，滿足不同祈福需求
             </h2>
-            <p className="text-gray-600 text-lg">
+            <p className="text-gray-600 text-base md:text-lg px-4">
               從傳統光明燈到專屬祈福燈，為您與家人獻上最誠摯的祝福
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
             {[
               {
                 icon: '🏮',
@@ -197,19 +181,19 @@ export default function HomePage() {
                 transition={{ duration: 0.5, delay: i * 0.1 }}
                 viewport={{ once: true }}
               >
-                <Card className={`bg-gradient-to-br ${lantern.color} border-2 border-temple-gold-200 hover:shadow-lg transition-shadow cursor-pointer group`}>
-                  <CardContent className="p-6 text-center space-y-3">
+                <Card className={`bg-gradient-to-br ${lantern.color} border-2 border-temple-gold-200 hover:shadow-lg transition-shadow cursor-pointer group h-full`}>
+                  <CardContent className="p-4 md:p-6 text-center space-y-2 md:space-y-3">
                     <motion.div
-                      className="text-5xl"
+                      className="text-4xl md:text-5xl"
                       whileHover={{ scale: 1.2, rotate: 5 }}
                       transition={{ duration: 0.3 }}
                     >
                       {lantern.icon}
                     </motion.div>
-                    <h3 className={`text-2xl font-temple font-bold ${lantern.textColor}`}>
+                    <h3 className={`text-xl md:text-2xl font-temple font-bold ${lantern.textColor}`}>
                       {lantern.name}
                     </h3>
-                    <p className="text-gray-600 text-sm">
+                    <p className="text-gray-600 text-xs md:text-sm">
                       {lantern.description}
                     </p>
                   </CardContent>
@@ -224,34 +208,34 @@ export default function HomePage() {
       <PromoSection />
 
       {/* 使用流程 */}
-      <section className="py-20 bg-gradient-to-b from-temple-gold-50 to-temple-orange-50">
+      <section className="py-12 md:py-20 bg-gradient-to-b from-temple-gold-50 to-temple-orange-50">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-temple font-bold text-temple-red-800 mb-4">
+          <div className="text-center mb-8 md:mb-12">
+            <h2 className="text-3xl md:text-4xl font-temple font-bold text-temple-red-800 mb-3 md:mb-4">
               簡單三步驟，輕鬆完成點燈
             </h2>
-            <p className="text-gray-600 text-lg">
+            <p className="text-gray-600 text-base md:text-lg px-4">
               省去奔波，在家也能虔誠祈福
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 max-w-5xl mx-auto">
             {[
               {
                 step: '1',
-                icon: <Flame className="w-12 h-12" />,
+                icon: <Flame className="w-10 h-10 md:w-12 md:h-12" />,
                 title: '選擇廟宇與燈種',
                 description: '瀏覽各地廟宇，選擇適合的燈種與祈福項目'
               },
               {
                 step: '2',
-                icon: <Heart className="w-12 h-12" />,
+                icon: <Heart className="w-10 h-10 md:w-12 md:h-12" />,
                 title: '填寫祈福資訊',
                 description: '輸入您的姓名、生辰資訊與祈福願望'
               },
               {
                 step: '3',
-                icon: <Sparkles className="w-12 h-12" />,
+                icon: <Sparkles className="w-10 h-10 md:w-12 md:h-12" />,
                 title: '完成付款點燈',
                 description: '安全付款後，廟方將為您點燈並提供證明'
               },
@@ -263,18 +247,18 @@ export default function HomePage() {
                 transition={{ duration: 0.5, delay: i * 0.2 }}
                 viewport={{ once: true }}
               >
-                <Card className="border-2 border-temple-gold-300 bg-white hover:shadow-xl transition-all group">
-                  <CardContent className="p-8 text-center space-y-4">
-                    <div className="w-20 h-20 mx-auto bg-temple-gradient rounded-full flex items-center justify-center text-white text-2xl font-bold font-temple shadow-lg group-hover:scale-110 transition-transform">
+                <Card className="border-2 border-temple-gold-300 bg-white hover:shadow-xl transition-all group h-full">
+                  <CardContent className="p-6 md:p-8 text-center space-y-3 md:space-y-4">
+                    <div className="w-16 h-16 md:w-20 md:h-20 mx-auto bg-temple-gradient rounded-full flex items-center justify-center text-white text-xl md:text-2xl font-bold font-temple shadow-lg group-hover:scale-110 transition-transform">
                       {step.step}
                     </div>
                     <div className="text-temple-red-600 flex justify-center">
                       {step.icon}
                     </div>
-                    <h3 className="text-2xl font-temple font-bold text-temple-red-800">
+                    <h3 className="text-xl md:text-2xl font-temple font-bold text-temple-red-800">
                       {step.title}
                     </h3>
-                    <p className="text-gray-600">
+                    <p className="text-gray-600 text-sm md:text-base">
                       {step.description}
                     </p>
                   </CardContent>
@@ -283,9 +267,9 @@ export default function HomePage() {
             ))}
           </div>
 
-          <div className="text-center mt-12">
+          <div className="text-center mt-8 md:mt-12">
             <Link href="/temples">
-              <Button variant="temple" size="xl">
+              <Button variant="temple" size="xl" className="w-full sm:w-auto">
                 立即開始點燈 →
               </Button>
             </Link>
