@@ -10,77 +10,86 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Lantern } from '@/components/temple/Lantern'
 
-// 模擬用戶資料（之後會從 Supabase 讀取）
-const mockUser = {
-  name: '王小明',
-  email: 'user@example.com',
-  phone: '0912-345-678',
-  totalOrders: 5,
-  totalLanterns: 8,
-}
-
-// 模擬訂單資料
-const mockOrders = [
-  {
-    id: 'TL20241201001',
-    date: '2024-12-01',
-    temple: '艋舺龍山寺',
-    lanterns: [{ name: '光明燈', believer: '王小明' }],
-    amount: 1200,
-    status: 'completed',
-  },
-  {
-    id: 'TL20241115002',
-    date: '2024-11-15',
-    temple: '臺北行天宮',
-    lanterns: [{ name: '財神燈', believer: '王大明' }, { name: '平安燈', believer: '王美麗' }],
-    amount: 3000,
-    status: 'completed',
-  },
-  {
-    id: 'TL20241210003',
-    date: '2024-12-10',
-    temple: '艋舺龍山寺',
-    lanterns: [{ name: '月老燈', believer: '王小明' }],
-    amount: 1500,
-    status: 'processing',
-  },
-]
-
 export default function UserDashboardPage() {
   const [mounted, setMounted] = useState(false)
   const [activeTab, setActiveTab] = useState('overview')
   const [saving, setSaving] = useState(false)
   const [saveSuccess, setSaveSuccess] = useState(false)
+  const [loading, setLoading] = useState(true)
+
+  // 真實資料狀態
+  const [user, setUser] = useState<any>(null)
+  const [orders, setOrders] = useState<any[]>([])
+  const [lanterns, setLanterns] = useState<any[]>([])
 
   // 用戶資料表單狀態
   const [userForm, setUserForm] = useState({
-    name: mockUser.name,
-    phone: mockUser.phone,
-    email: mockUser.email,
+    name: '',
+    phone: '',
+    email: '',
   })
 
   useEffect(() => {
     setMounted(true)
+    fetchData()
   }, [])
 
-  // 儲存用戶資料
+  const fetchData = async () => {
+    try {
+      setLoading(true)
+
+      // 獲取用戶資料
+      const profileRes = await fetch('/api/user/profile')
+      if (profileRes.ok) {
+        const profileData = await profileRes.json()
+        setUser(profileData)
+        setUserForm({
+          name: profileData.name || '',
+          phone: profileData.phone || '',
+          email: profileData.email || '',
+        })
+      }
+
+      // 獲取訂單
+      const ordersRes = await fetch('/api/orders')
+      if (ordersRes.ok) {
+        const ordersData = await ordersRes.json()
+        setOrders(ordersData)
+      }
+
+      // 獲取點燈記錄
+      const lanternsRes = await fetch('/api/user/lanterns')
+      if (lanternsRes.ok) {
+        const lanternsData = await lanternsRes.json()
+        setLanterns(lanternsData)
+      }
+    } catch (error) {
+      console.error('Failed to fetch data:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const handleSaveProfile = async () => {
     setSaving(true)
     setSaveSuccess(false)
 
     try {
-      // TODO: 連接 Supabase 更新用戶資料
-      // const { error } = await supabase
-      //   .from('users')
-      //   .update({ name: userForm.name, phone: userForm.phone })
-      //   .eq('id', userId)
+      const res = await fetch('/api/user/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: userForm.name,
+          phone: userForm.phone,
+        }),
+      })
 
-      // 模擬 API 請求
-      await new Promise(resolve => setTimeout(resolve, 1000))
-
-      setSaveSuccess(true)
-      setTimeout(() => setSaveSuccess(false), 3000)
+      if (res.ok) {
+        setSaveSuccess(true)
+        setTimeout(() => setSaveSuccess(false), 3000)
+      } else {
+        alert('儲存失敗，請稍後再試')
+      }
     } catch (error) {
       console.error('儲存失敗:', error)
       alert('儲存失敗，請稍後再試')
@@ -89,10 +98,27 @@ export default function UserDashboardPage() {
     }
   }
 
-  if (!mounted) {
+  const handleLogout = async () => {
+    const { signOut } = await import('@/lib/auth')
+    await signOut()
+    window.location.href = '/'
+  }
+
+  if (!mounted || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-4xl animate-bounce">🏮</div>
+      </div>
+    )
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600 mb-4">請先登入</p>
+          <Button onClick={() => window.location.href = '/login'}>前往登入</Button>
+        </div>
       </div>
     )
   }
@@ -120,8 +146,8 @@ export default function UserDashboardPage() {
               👤
             </div>
             <div className="text-white">
-              <h1 className="text-3xl font-temple font-bold">{mockUser.name}</h1>
-              <p className="opacity-80">{mockUser.email}</p>
+              <h1 className="text-3xl font-temple font-bold">{user.name || '用戶'}</h1>
+              <p className="opacity-80">{user.email}</p>
             </div>
           </div>
         </div>
@@ -143,11 +169,10 @@ export default function UserDashboardPage() {
                     <button
                       key={item.id}
                       onClick={() => setActiveTab(item.id)}
-                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
-                        activeTab === item.id
+                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${activeTab === item.id
                           ? 'bg-temple-red-600 text-white'
                           : 'hover:bg-temple-gold-100 text-gray-700'
-                      }`}
+                        }`}
                     >
                       {item.icon}
                       {item.label}
@@ -155,6 +180,7 @@ export default function UserDashboardPage() {
                   ))}
                   <hr className="my-4 border-temple-gold-200" />
                   <button
+                    onClick={handleLogout}
                     className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-red-600 hover:bg-red-50 transition-all"
                   >
                     <LogOut className="w-5 h-5" />
@@ -179,21 +205,21 @@ export default function UserDashboardPage() {
                   <Card className="border-2 border-temple-gold-200">
                     <CardContent className="p-6 text-center">
                       <div className="text-4xl mb-2">📦</div>
-                      <div className="text-3xl font-bold text-temple-red-700">{mockUser.totalOrders}</div>
+                      <div className="text-3xl font-bold text-temple-red-700">{user.totalOrders || 0}</div>
                       <div className="text-gray-600">總訂單數</div>
                     </CardContent>
                   </Card>
                   <Card className="border-2 border-temple-gold-200">
                     <CardContent className="p-6 text-center">
                       <div className="text-4xl mb-2">🏮</div>
-                      <div className="text-3xl font-bold text-temple-red-700">{mockUser.totalLanterns}</div>
+                      <div className="text-3xl font-bold text-temple-red-700">{user.totalLanterns || 0}</div>
                       <div className="text-gray-600">點燈次數</div>
                     </CardContent>
                   </Card>
                   <Card className="border-2 border-temple-gold-200">
                     <CardContent className="p-6 text-center">
                       <div className="text-4xl mb-2">⭐</div>
-                      <div className="text-3xl font-bold text-temple-red-700">金卡</div>
+                      <div className="text-3xl font-bold text-temple-red-700">會員</div>
                       <div className="text-gray-600">會員等級</div>
                     </CardContent>
                   </Card>
@@ -207,27 +233,31 @@ export default function UserDashboardPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-4">
-                      {mockOrders.slice(0, 3).map((order) => (
-                        <div
-                          key={order.id}
-                          className="flex items-center justify-between p-4 bg-temple-gold-50 rounded-lg"
-                        >
-                          <div>
-                            <div className="font-medium text-temple-red-800">{order.temple}</div>
-                            <div className="text-sm text-gray-600">
-                              {order.lanterns.map(l => l.name).join('、')} · {order.date}
+                    {orders.length === 0 ? (
+                      <p className="text-gray-500 text-center py-8">目前沒有訂單記錄</p>
+                    ) : (
+                      <div className="space-y-4">
+                        {orders.slice(0, 3).map((order) => (
+                          <div
+                            key={order.id}
+                            className="flex items-center justify-between p-4 bg-temple-gold-50 rounded-lg"
+                          >
+                            <div>
+                              <div className="font-medium text-temple-red-800">{order.temples?.name}</div>
+                              <div className="text-sm text-gray-600">
+                                {new Date(order.created_at).toLocaleDateString('zh-TW')}
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              {getStatusBadge(order.status)}
+                              <div className="text-lg font-bold text-temple-red-700 mt-1">
+                                NT$ {order.total_amount?.toLocaleString()}
+                              </div>
                             </div>
                           </div>
-                          <div className="text-right">
-                            {getStatusBadge(order.status)}
-                            <div className="text-lg font-bold text-temple-red-700 mt-1">
-                              NT$ {order.amount.toLocaleString()}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                        ))}
+                      </div>
+                    )}
                     <Button
                       variant="outline"
                       className="w-full mt-4 border-temple-gold-300"
@@ -260,7 +290,7 @@ export default function UserDashboardPage() {
                       <Bell className="w-8 h-8 mb-2 text-temple-red-600" />
                       <span>通知設定</span>
                     </Button>
-                    <Button variant="outline" className="w-full h-24 flex-col border-temple-gold-200">
+                    <Button variant="outline" className="w-full h-24 flex-col border-temple-gold-200" onClick={() => setActiveTab('settings')}>
                       <Settings className="w-8 h-8 mb-2 text-temple-red-600" />
                       <span>帳戶設定</span>
                     </Button>
@@ -282,53 +312,39 @@ export default function UserDashboardPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-4">
-                      {mockOrders.map((order) => (
-                        <div
-                          key={order.id}
-                          className="border border-temple-gold-200 rounded-lg p-6 hover:shadow-lg transition-shadow"
-                        >
-                          <div className="flex justify-between items-start mb-4">
-                            <div>
-                              <div className="text-sm text-gray-500">訂單編號</div>
-                              <div className="font-mono font-bold">{order.id}</div>
-                            </div>
-                            {getStatusBadge(order.status)}
-                          </div>
-                          <div className="flex items-center gap-4 mb-4">
-                            <Lantern size="sm" color="red" animate={false} />
-                            <div className="flex-1">
-                              <div className="font-bold text-temple-red-800">{order.temple}</div>
-                              <div className="text-sm text-gray-600">{order.date}</div>
-                            </div>
-                          </div>
-                          <div className="bg-temple-gold-50 rounded p-3 mb-4">
-                            {order.lanterns.map((l, i) => (
-                              <div key={i} className="flex justify-between text-sm">
-                                <span>{l.name}</span>
-                                <span className="text-gray-600">{l.believer}</span>
+                    {orders.length === 0 ? (
+                      <p className="text-gray-500 text-center py-8">目前沒有訂單記錄</p>
+                    ) : (
+                      <div className="space-y-4">
+                        {orders.map((order) => (
+                          <Link key={order.id} href={`/orders/${order.id}`}>
+                            <div className="border border-temple-gold-200 rounded-lg p-6 hover:shadow-lg transition-shadow cursor-pointer">
+                              <div className="flex justify-between items-start mb-4">
+                                <div>
+                                  <div className="text-sm text-gray-500">訂單編號</div>
+                                  <div className="font-mono font-bold">{order.id}</div>
+                                </div>
+                                {getStatusBadge(order.status)}
                               </div>
-                            ))}
-                          </div>
-                          <div className="flex justify-between items-center">
-                            <div className="text-xl font-bold text-temple-red-700">
-                              NT$ {order.amount.toLocaleString()}
+                              <div className="flex items-center gap-4 mb-4">
+                                <Lantern size="sm" color="red" animate={false} />
+                                <div className="flex-1">
+                                  <div className="font-bold text-temple-red-800">{order.temples?.name}</div>
+                                  <div className="text-sm text-gray-600">
+                                    {new Date(order.created_at).toLocaleDateString('zh-TW')}
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="flex justify-between items-center">
+                                <div className="text-xl font-bold text-temple-red-700">
+                                  NT$ {order.total_amount?.toLocaleString()}
+                                </div>
+                              </div>
                             </div>
-                            <div className="flex gap-2">
-                              <Button variant="outline" size="sm" className="border-temple-gold-300">
-                                查看詳情
-                              </Button>
-                              {order.status === 'completed' && (
-                                <Button variant="temple" size="sm">
-                                  <Download className="w-4 h-4 mr-1" />
-                                  下載證明
-                                </Button>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                          </Link>
+                        ))}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </motion.div>
@@ -347,28 +363,30 @@ export default function UserDashboardPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {mockOrders.flatMap(order => 
-                        order.lanterns.map((lantern, i) => (
-                          <Card key={`${order.id}-${i}`} className="border border-temple-gold-200">
+                    {lanterns.length === 0 ? (
+                      <p className="text-gray-500 text-center py-8">目前沒有點燈記錄</p>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {lanterns.map((lantern) => (
+                          <Card key={lantern.id} className="border border-temple-gold-200">
                             <CardContent className="p-4">
                               <div className="flex items-center gap-4">
                                 <Lantern size="md" color="red" animate />
                                 <div className="flex-1">
-                                  <div className="font-bold text-temple-red-800">{lantern.name}</div>
-                                  <div className="text-sm text-gray-600">點燈人：{lantern.believer}</div>
-                                  <div className="text-sm text-gray-600">{order.temple}</div>
+                                  <div className="font-bold text-temple-red-800">{lantern.lantern_name}</div>
+                                  <div className="text-sm text-gray-600">點燈人：{lantern.believer_name}</div>
+                                  <div className="text-sm text-gray-600">{lantern.temple_name}</div>
                                   <div className="text-xs text-gray-400 mt-1">
-                                    {order.date} ~ 2025-12-31
+                                    {lantern.start_date} ~ {lantern.expiry_date}
                                   </div>
                                 </div>
                                 <div className="text-2xl">✨</div>
                               </div>
                             </CardContent>
                           </Card>
-                        ))
-                      )}
-                    </div>
+                        ))}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </motion.div>
@@ -387,7 +405,6 @@ export default function UserDashboardPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-6">
-                    {/* 成功訊息 */}
                     {saveSuccess && (
                       <motion.div
                         initial={{ opacity: 0, y: -10 }}
@@ -466,9 +483,3 @@ export default function UserDashboardPage() {
     </div>
   )
 }
-
-
-
-
-
-

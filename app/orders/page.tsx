@@ -9,52 +9,33 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Lantern } from '@/components/temple/Lantern'
 
-// 模擬訂單資料
-const mockOrders = [
-  {
-    id: 'TL2024121001',
-    date: '2024-12-10',
-    temple: '艋舺龍山寺',
-    items: [
-      { name: '光明燈', quantity: 1, price: 1200 },
-      { name: '平安燈', quantity: 2, price: 1000 },
-    ],
-    total: 3200,
-    status: 'completed',
-    believer: '王○明'
-  },
-  {
-    id: 'TL2024120901',
-    date: '2024-12-09',
-    temple: '臺北行天宮',
-    items: [
-      { name: '財神燈', quantity: 1, price: 1800 },
-    ],
-    total: 1800,
-    status: 'processing',
-    believer: '王○明'
-  },
-  {
-    id: 'TL2024120501',
-    date: '2024-12-05',
-    temple: '臺北霞海城隍廟',
-    items: [
-      { name: '月老燈', quantity: 1, price: 1500 },
-    ],
-    total: 1500,
-    status: 'completed',
-    believer: '王○明'
-  },
-]
-
 export default function OrdersPage() {
   const [mounted, setMounted] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [searchId, setSearchId] = useState('')
-  const [orders, setOrders] = useState(mockOrders)
+  const [allOrders, setAllOrders] = useState<any[]>([])
+  const [orders, setOrders] = useState<any[]>([])
 
   useEffect(() => {
     setMounted(true)
+    fetchOrders()
   }, [])
+
+  const fetchOrders = async () => {
+    try {
+      setLoading(true)
+      const res = await fetch('/api/orders')
+      if (res.ok) {
+        const data = await res.json()
+        setAllOrders(data)
+        setOrders(data)
+      }
+    } catch (error) {
+      console.error('Failed to fetch orders:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -73,16 +54,16 @@ export default function OrdersPage() {
 
   const handleSearch = () => {
     if (!searchId) {
-      setOrders(mockOrders)
+      setOrders(allOrders)
       return
     }
-    const filtered = mockOrders.filter(order => 
+    const filtered = allOrders.filter(order =>
       order.id.toLowerCase().includes(searchId.toLowerCase())
     )
     setOrders(filtered)
   }
 
-  if (!mounted) {
+  if (!mounted || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-4xl animate-bounce">🏮</div>
@@ -140,7 +121,7 @@ export default function OrdersPage() {
                   <ShoppingBag className="w-16 h-16 mx-auto text-gray-300 mb-4" />
                   <h3 className="text-xl font-bold text-gray-600 mb-2">找不到訂單</h3>
                   <p className="text-gray-500 mb-6">
-                    請確認訂單編號是否正確
+                    {searchId ? '請確認訂單編號是否正確' : '您還沒有任何訂單'}
                   </p>
                   <Button variant="temple" asChild>
                     <Link href="/temples">前往點燈</Link>
@@ -165,11 +146,11 @@ export default function OrdersPage() {
                           <div className="flex items-center gap-4 text-sm text-gray-600">
                             <span className="flex items-center gap-1">
                               <Calendar className="w-4 h-4" />
-                              {order.date}
+                              {new Date(order.created_at).toLocaleDateString('zh-TW')}
                             </span>
                             <span className="flex items-center gap-1">
                               <Flame className="w-4 h-4 text-temple-red-600" />
-                              {order.temple}
+                              {order.temples?.name}
                             </span>
                           </div>
                         </div>
@@ -179,11 +160,11 @@ export default function OrdersPage() {
                     <CardContent className="p-6">
                       {/* Order Items */}
                       <div className="space-y-3 mb-6">
-                        {order.items.map((item, i) => (
+                        {order.order_items?.map((item: any, i: number) => (
                           <div key={i} className="flex items-center justify-between py-2 border-b border-dashed last:border-0">
                             <div className="flex items-center gap-3">
                               <span className="text-xl">🏮</span>
-                              <span className="font-medium">{item.name}</span>
+                              <span className="font-medium">{item.lantern_products?.name}</span>
                               <span className="text-gray-500">x {item.quantity}</span>
                             </div>
                             <span className="font-medium">
@@ -195,15 +176,11 @@ export default function OrdersPage() {
 
                       {/* Footer */}
                       <div className="flex items-center justify-between pt-4 border-t">
-                        <div>
-                          <span className="text-gray-500">點燈信眾：</span>
-                          <span className="font-medium">{order.believer}</span>
-                        </div>
                         <div className="flex items-center gap-4">
                           <div className="text-right">
                             <span className="text-gray-500 text-sm">訂單金額</span>
                             <div className="text-xl font-bold text-temple-red-700">
-                              NT$ {order.total.toLocaleString()}
+                              NT$ {order.total_amount?.toLocaleString()}
                             </div>
                           </div>
                           <Link href={`/orders/${order.id}`}>
@@ -235,9 +212,3 @@ export default function OrdersPage() {
     </div>
   )
 }
-
-
-
-
-
-
