@@ -11,11 +11,12 @@ import {
     Calendar,
     FileText,
     Image,
-    LogOut,
-    Menu,
-    X
+    DollarSign,
+    Settings,
+    LogOut
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Lantern } from '@/components/temple/Lantern'
 
 interface AdminLayoutProps {
     children: React.ReactNode
@@ -26,7 +27,6 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     const pathname = usePathname()
     const [user, setUser] = useState<any>(null)
     const [loading, setLoading] = useState(true)
-    const [sidebarOpen, setSidebarOpen] = useState(true)
 
     useEffect(() => {
         checkAuth()
@@ -63,7 +63,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center">
+            <div className="min-h-screen flex items-center justify-center bg-gray-50">
                 <div className="text-4xl animate-bounce">🏮</div>
             </div>
         )
@@ -73,79 +73,73 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         return null
     }
 
-    const menuItems = [
+    const navItems = [
         { icon: LayoutDashboard, label: '儀表板', href: '/admin/dashboard' },
-        { icon: Users, label: '用戶管理', href: '/admin/users' },
         { icon: Building2, label: '廟宇管理', href: '/admin/temples' },
+        { icon: Users, label: '用戶管理', href: '/admin/users' },
         { icon: ShoppingBag, label: '訂單管理', href: '/admin/orders' },
         { icon: Calendar, label: '活動管理', href: '/admin/events' },
-        { icon: Image, label: '橫幅管理', href: '/admin/banners' },
         { icon: FileText, label: '內容管理', href: '/admin/content' },
+        { icon: Image, label: '廣告管理', href: '/admin/banners' },
+        { icon: DollarSign, label: '財務報表', href: '/admin/finance' },
+        { icon: Settings, label: '系統設定', href: '/admin/settings' },
     ]
 
     return (
-        <div className="min-h-screen bg-gray-50 flex">
-            {/* Sidebar */}
-            <aside className={`${sidebarOpen ? 'w-64' : 'w-20'} bg-gray-900 text-white transition-all duration-300 flex flex-col`}>
-                {/* Logo */}
-                <div className="p-4 border-b border-gray-800">
-                    <div className="flex items-center justify-between">
-                        {sidebarOpen && (
-                            <h1 className="text-xl font-bold">管理後台</h1>
-                        )}
-                        <button
-                            onClick={() => setSidebarOpen(!sidebarOpen)}
-                            className="p-2 hover:bg-gray-800 rounded-lg"
-                        >
-                            {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-                        </button>
+        <div className="min-h-screen bg-gray-50">
+            <div className="flex">
+                {/* Sidebar */}
+                <aside className="w-64 min-h-screen bg-white border-r border-gray-200 fixed left-0 top-0">
+                    <div className="p-6 border-b border-gray-200">
+                        <Link href="/admin/dashboard" className="flex items-center gap-3">
+                            <Lantern size="sm" color="red" animate />
+                            <div>
+                                <h1 className="font-temple font-bold text-temple-red-700">台灣點燈網</h1>
+                                <p className="text-xs text-gray-500">管理後台</p>
+                            </div>
+                        </Link>
                     </div>
-                </div>
 
-                {/* Menu Items */}
-                <nav className="flex-1 p-4 space-y-2">
-                    {menuItems.map((item) => {
-                        const Icon = item.icon
-                        const isActive = pathname === item.href
-                        return (
-                            <Link key={item.href} href={item.href}>
-                                <div
-                                    className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isActive
-                                            ? 'bg-temple-red-600 text-white'
-                                            : 'hover:bg-gray-800 text-gray-300'
-                                        }`}
-                                >
-                                    <Icon className="w-5 h-5 flex-shrink-0" />
-                                    {sidebarOpen && <span>{item.label}</span>}
-                                </div>
-                            </Link>
-                        )
-                    })}
-                </nav>
+                    <nav className="p-4">
+                        <ul className="space-y-1">
+                            {navItems.map((item) => {
+                                const Icon = item.icon
+                                const isActive = pathname === item.href
+                                return (
+                                    <li key={item.href}>
+                                        <Link
+                                            href={item.href}
+                                            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${isActive
+                                                    ? 'bg-temple-red-50 text-temple-red-700 font-medium'
+                                                    : 'text-gray-600 hover:bg-gray-100'
+                                                }`}
+                                        >
+                                            <Icon className="w-5 h-5" />
+                                            {item.label}
+                                        </Link>
+                                    </li>
+                                )
+                            })}
+                        </ul>
+                    </nav>
 
-                {/* User Info */}
-                <div className="p-4 border-t border-gray-800">
-                    {sidebarOpen ? (
-                        <div className="mb-3">
-                            <p className="text-sm text-gray-400">登入為</p>
-                            <p className="font-medium truncate">{user.name || user.email}</p>
-                        </div>
-                    ) : null}
-                    <Button
-                        variant="outline"
-                        className="w-full bg-gray-800 border-gray-700 hover:bg-gray-700"
-                        onClick={handleLogout}
-                    >
-                        <LogOut className="w-4 h-4 mr-2" />
-                        {sidebarOpen && '登出'}
-                    </Button>
-                </div>
-            </aside>
+                    <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
+                        <Button
+                            variant="ghost"
+                            className="w-full justify-start text-gray-600 hover:text-temple-red-600"
+                            onClick={handleLogout}
+                        >
+                            <LogOut className="w-5 h-5 mr-3" />
+                            登出系統
+                        </Button>
+                    </div>
+                </aside>
 
-            {/* Main Content */}
-            <main className="flex-1 overflow-auto">
-                {children}
-            </main>
+                {/* Main Content */}
+                <main className="flex-1 ml-64">
+                    {children}
+                </main>
+            </div>
         </div>
     )
 }
