@@ -4,64 +4,13 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import {
-  User, ShoppingBag, Heart, Settings, LogOut,
-  Edit, ChevronRight, Flame, Calendar, Clock
+  User, ShoppingBag, Settings, LogOut,
+  ChevronRight, Flame, Calendar
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Lantern } from '@/components/temple/Lantern'
 import { useUserStore } from '@/lib/store'
-
-// 模擬用戶資料
-const mockUser = {
-  name: '王大明',
-  email: 'wang@example.com',
-  phone: '0912-345-678',
-  memberSince: '2024-01-15',
-  avatar: null,
-}
-
-// 模擬訂單
-const mockOrders = [
-  {
-    id: 'TL2024121001',
-    date: '2024-12-10',
-    temple: '艋舺龍山寺',
-    lantern: '光明燈',
-    amount: 1200,
-    status: 'completed',
-  },
-  {
-    id: 'TL2024120901',
-    date: '2024-12-09',
-    temple: '臺北行天宮',
-    lantern: '財神燈',
-    amount: 1800,
-    status: 'processing',
-  },
-]
-
-// 模擬點燈記錄
-const mockLanterns = [
-  {
-    id: 1,
-    temple: '艋舺龍山寺',
-    lantern: '光明燈',
-    believer: '王大明',
-    startDate: '2024-01-01',
-    endDate: '2024-12-31',
-    active: true,
-  },
-  {
-    id: 2,
-    temple: '臺北行天宮',
-    lantern: '平安燈',
-    believer: '王小美',
-    startDate: '2024-06-01',
-    endDate: '2025-05-31',
-    active: true,
-  },
-]
 
 export default function DashboardPage() {
   const [mounted, setMounted] = useState(false)
@@ -70,7 +19,6 @@ export default function DashboardPage() {
   const [orders, setOrders] = useState<any[]>([])
   const [lanterns, setLanterns] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const userStore = useUserStore((state) => state.user)
   const clearUser = useUserStore((state) => state.setUser)
 
   useEffect(() => {
@@ -99,7 +47,7 @@ export default function DashboardPage() {
         // 獲取用戶點燈記錄
         const lanternsRes = await fetch('/api/user/lanterns')
         if (lanternsRes.ok) {
-          const lanternsData = await lanternsRes.json()
+          const lanternsData = await ordersRes.json()
           setLanterns(lanternsData)
         }
       }
@@ -159,7 +107,6 @@ export default function DashboardPage() {
             animate={{ opacity: 1, y: 0 }}
             className="text-white flex items-center gap-6"
           >
-            {/* Avatar */}
             <div className="w-24 h-24 bg-white/20 rounded-full flex items-center justify-center text-5xl">
               👤
             </div>
@@ -193,8 +140,8 @@ export default function DashboardPage() {
                       key={item.id}
                       onClick={() => setActiveTab(item.id)}
                       className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${activeTab === item.id
-                        ? 'bg-temple-red-600 text-white'
-                        : 'hover:bg-gray-100 text-gray-700'
+                          ? 'bg-temple-red-600 text-white'
+                          : 'hover:bg-gray-100 text-gray-700'
                         }`}
                     >
                       {item.icon}
@@ -237,7 +184,9 @@ export default function DashboardPage() {
                   </Card>
                   <Card className="text-center py-6">
                     <div className="text-4xl mb-2">🙏</div>
-                    <div className="text-3xl font-bold text-temple-red-700">{lanterns.filter((l: any) => l.active).length}</div>
+                    <div className="text-3xl font-bold text-temple-red-700">
+                      {lanterns.filter((l: any) => l.active).length}
+                    </div>
                     <div className="text-gray-600 text-sm">進行中</div>
                   </Card>
                 </div>
@@ -267,16 +216,17 @@ export default function DashboardPage() {
                                 {lantern.temple} - {lantern.lantern}
                               </div>
                               <div className="text-sm text-gray-600">
-                                信眾：{lantern.believer}
+                                信眾：{lantern.believer_name}
                               </div>
                             </div>
                           </div>
                           <div className="text-right text-sm">
                             <div className="text-gray-500">有效期限</div>
-                            <div className="font-medium">{lantern.endDate}</div>
+                            <div className="font-medium">{lantern.expiry_date}</div>
                           </div>
                         </div>
-                      ))}
+                      ))
+                    )}
                   </CardContent>
                 </Card>
 
@@ -297,14 +247,15 @@ export default function DashboardPage() {
                         <div key={order.id} className="flex items-center justify-between py-3 border-b last:border-0">
                           <div>
                             <div className="font-mono text-sm text-gray-500">{order.id}</div>
-                            <div className="font-medium">{order.temple} - {order.lantern}</div>
+                            <div className="font-medium">{order.temples?.name}</div>
                           </div>
                           <div className="text-right">
-                            <div className="font-medium">NT$ {order.amount.toLocaleString()}</div>
+                            <div className="font-medium">NT$ {order.total_amount?.toLocaleString()}</div>
                             {getStatusBadge(order.status)}
                           </div>
                         </div>
-                      ))}
+                      ))
+                    )}
                   </CardContent>
                 </Card>
               </motion.div>
@@ -329,19 +280,22 @@ export default function DashboardPage() {
                           <div className="flex items-center justify-between p-4 border rounded-lg mb-3 hover:border-temple-gold-400 hover:shadow-md transition-all">
                             <div>
                               <div className="font-mono text-sm text-gray-500">{order.id}</div>
-                              <div className="font-medium">{order.temple}</div>
+                              <div className="font-medium">{order.temples?.name}</div>
                               <div className="text-sm text-gray-600 flex items-center gap-2 mt-1">
                                 <Calendar className="w-4 h-4" />
-                                {order.date}
+                                {new Date(order.created_at).toLocaleDateString('zh-TW')}
                               </div>
                             </div>
                             <div className="text-right">
-                              <div className="text-lg font-bold text-temple-red-700">NT$ {order.amount.toLocaleString()}</div>
+                              <div className="text-lg font-bold text-temple-red-700">
+                                NT$ {order.total_amount?.toLocaleString()}
+                              </div>
                               {getStatusBadge(order.status)}
                             </div>
                           </div>
                         </Link>
-                      ))}
+                      ))
+                    )}
                   </CardContent>
                 </Card>
               </motion.div>
@@ -369,34 +323,25 @@ export default function DashboardPage() {
                                 <Lantern size="sm" color="gold" animate={false} />
                               </div>
                               <div>
-                                <div className="font-bold text-temple-red-800">{lantern.lantern}</div>
-                                <div className="text-sm text-gray-600">{lantern.temple}</div>
+                                <div className="font-bold text-temple-red-800">{lantern.lantern_name}</div>
+                                <div className="text-sm text-gray-600">{lantern.temple_name}</div>
                                 <div className="text-sm text-gray-500 mt-1">
-                                  信眾：{lantern.believer}
+                                  信眾：{lantern.believer_name}
                                 </div>
                               </div>
                             </div>
                             <div className="text-right">
                               <span className={`px-3 py-1 rounded-full text-sm ${lantern.active
-                                ? 'bg-green-100 text-green-700'
-                                : 'bg-gray-100 text-gray-600'
+                                  ? 'bg-green-100 text-green-700'
+                                  : 'bg-gray-100 text-gray-600'
                                 }`}>
                                 {lantern.active ? '燈火長明中' : '已結束'}
                               </span>
                             </div>
                           </div>
-                          <div className="mt-4 pt-4 border-t grid grid-cols-2 gap-4 text-sm">
-                            <div>
-                              <span className="text-gray-500">開始日期：</span>
-                              <span>{lantern.startDate}</span>
-                            </div>
-                            <div>
-                              <span className="text-gray-500">結束日期：</span>
-                              <span>{lantern.endDate}</span>
-                            </div>
-                          </div>
                         </div>
-                      ))}
+                      ))
+                    )}
                   </CardContent>
                 </Card>
               </motion.div>
@@ -418,7 +363,7 @@ export default function DashboardPage() {
                         <label className="text-sm font-medium text-gray-700">姓名</label>
                         <input
                           type="text"
-                          defaultValue={mockUser.name}
+                          defaultValue={user.name}
                           className="mt-1 w-full px-3 py-2 border rounded-lg"
                         />
                       </div>
@@ -426,16 +371,9 @@ export default function DashboardPage() {
                         <label className="text-sm font-medium text-gray-700">電子郵件</label>
                         <input
                           type="email"
-                          defaultValue={mockUser.email}
+                          defaultValue={user.email}
                           className="mt-1 w-full px-3 py-2 border rounded-lg"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium text-gray-700">手機號碼</label>
-                        <input
-                          type="tel"
-                          defaultValue={mockUser.phone}
-                          className="mt-1 w-full px-3 py-2 border rounded-lg"
+                          disabled
                         />
                       </div>
                     </div>
@@ -456,9 +394,3 @@ export default function DashboardPage() {
     </div>
   )
 }
-
-
-
-
-
-

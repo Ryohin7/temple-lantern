@@ -10,7 +10,7 @@ export interface AuthUser {
 // 註冊新用戶
 export async function signUp(email: string, password: string, name: string, role: 'user' | 'temple_admin' = 'user') {
     try {
-        // 1. 創建 Supabase Auth 用戶
+        // 1. 創建 Supabase Auth 用戶，將資料存在 metadata 中
         const { data: authData, error: authError } = await supabase.auth.signUp({
             email,
             password,
@@ -25,25 +25,27 @@ export async function signUp(email: string, password: string, name: string, role
         if (authError) throw authError
         if (!authData.user) throw new Error('User creation failed')
 
-        // 2. 在 users 表中創建用戶資料
-        // 使用 upsert 來處理可能已存在的記錄
-        const { error: userError } = await supabase
-            .from('users')
-            .upsert([
-                {
-                    id: authData.user.id,
-                    email,
-                    name,
-                    role,
-                }
-            ], {
-                onConflict: 'id'
-            })
+        // 2. 嘗試在 users 表中創建用戶資料（可選）
+        // 如果失敗也不影響註冊，因為資料已存在 auth.users 的 metadata 中
+        try {
+            const { error: userError } = await supabase
+                .from('users')
+                .upsert([
+                    {
+                        id: authData.user.id,
+                        email,
+                        name,
+                        role,
+                    }
+                ], {
+                    onConflict: 'id'
+                })
 
-        if (userError) {
-            console.error('Error creating user record:', userError)
-            // 即使 users 表插入失敗，Auth 用戶已創建，所以不拋出錯誤
-            // 用戶可以登入，稍後再同步資料
+            if (userError) {
+                console.warn('Failed to create user record in public.users, but auth user created successfully:', userError)
+            }
+        } catch (err) {
+            console.warn('Error creating user record, but auth user created successfully:', err)
         }
 
         return { user: authData.user, error: null }
@@ -95,15 +97,25 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
 
         if (!user) return null
 
+        // 先嘗試從 users 表獲取
         const { data: userData, error } = await supabase
             .from('users')
             .select('*')
             .eq('id', user.id)
             .single()
 
-        if (error) throw error
+        // 如果 users 表有資料，使用它
+        if (userData && !error) {
+            return userData as AuthUser
+        }
 
-        return userData as AuthUser
+        // 否則從 auth metadata 構建用戶資料
+        return {
+            id: user.id,
+            email: user.email || '',
+            name: user.user_metadata?.name || '',
+            role: user.user_metadata?.role || 'user',
+        } as AuthUser
     } catch (error) {
         console.error('Error getting current user:', error)
         return null
