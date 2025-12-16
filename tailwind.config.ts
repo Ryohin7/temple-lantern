@@ -49,6 +49,41 @@ const config = {
             600: '#ea580c',
           },
         },
+        // 文青佛系配色
+        sage: {
+          50: '#f6f7f6',
+          100: '#e3e7e3',
+          200: '#c7d1c7',
+          300: '#a3b5a3',
+          400: '#7d957d',
+          500: '#6b8e7f',
+          600: '#557365',
+          700: '#465c52',
+          800: '#3a4b43',
+          900: '#323f38',
+        },
+        zen: {
+          green: {
+            50: '#f0f5f2',
+            100: '#d9e5dd',
+            200: '#b8cfc1',
+            300: '#8db48c',
+            400: '#6b8e7f',
+            500: '#5a7a6b',
+            600: '#4a6356',
+            700: '#3d5147',
+            800: '#35433c',
+            900: '#2d3933',
+          },
+          beige: {
+            50: '#faf9f6',
+            100: '#f5f3ed',
+            200: '#e8e4d8',
+            300: '#d9d2c1',
+            400: '#c8bda8',
+            500: '#b8a890',
+          },
+        },
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
@@ -122,6 +157,7 @@ const config = {
 } satisfies Config
 
 export default config
+
 
 
 

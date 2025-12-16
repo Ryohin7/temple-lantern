@@ -6,52 +6,46 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
-// 模擬廣告資料（實際應從 API 取得）
-const mockBanners = [
-  {
-    id: 1,
-    title: '2025新春祈福特惠',
-    subtitle: '光明燈、平安燈全面8折',
-    image: '/banners/new-year.jpg',
-    link: '/events/new-year-blessing-2025',
-    templeName: '艋舺龍山寺',
-    bgColor: 'from-red-600 to-red-800',
-    active: true,
-    startDate: '2024-01-01',
-    endDate: '2026-12-31',
-  },
-  {
-    id: 2,
-    title: '元宵節點燈活動',
-    subtitle: '報名即送精美福袋',
-    image: '/banners/lantern.jpg',
-    link: '/events/yuanxiao-lantern-2025',
-    templeName: '臺北行天宮',
-    bgColor: 'from-orange-500 to-red-600',
-    active: true,
-    startDate: '2024-01-01',
-    endDate: '2026-12-31',
-  },
-  {
-    id: 3,
-    title: '月老燈特別企劃',
-    subtitle: '祈求良緣，姻緣燈85折',
-    image: '/banners/love.jpg',
-    link: '/temples/xiahai-temple',
-    templeName: '臺北霞海城隍廟',
-    bgColor: 'from-pink-500 to-rose-600',
-    active: true,
-    startDate: '2024-01-01',
-    endDate: '2026-12-31',
-  },
-]
+// V1.0 正式版：模擬資料已移除，改為從 API 獲取
+// 請實作 API 端點：/api/banners
+
+interface Banner {
+  id: number
+  title: string
+  subtitle: string
+  image: string
+  link: string
+  templeName: string
+  bgColor: string
+  active: boolean
+  startDate: string
+  endDate: string
+}
 
 export function PromoBanner() {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [mounted, setMounted] = useState(false)
+  const [banners, setBanners] = useState<Banner[]>([])
+
+  // 從 API 獲取廣告資料
+  useEffect(() => {
+    const fetchBanners = async () => {
+      try {
+        const response = await fetch('/api/banners')
+        if (response.ok) {
+          const data = await response.json()
+          setBanners(data)
+        }
+      } catch (error) {
+        console.error('Failed to fetch banners:', error)
+        setBanners([])
+      }
+    }
+    fetchBanners()
+  }, [])
 
   // 過濾有效的廣告
-  const activeBanners = mockBanners.filter(banner => {
+  const activeBanners = banners.filter(banner => {
     if (!banner.active) return false
     const now = new Date()
     const start = new Date(banner.startDate)

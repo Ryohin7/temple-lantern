@@ -19,77 +19,9 @@ export interface Coupon {
   createdAt: string
 }
 
-// 模擬折扣碼資料
-export const mockCoupons: Coupon[] = [
-  {
-    id: '1',
-    code: 'NEWYEAR2025',
-    name: '2025新春優惠',
-    description: '全站點燈服務 85 折',
-    type: 'percentage',
-    value: 15,
-    minOrderAmount: 1000,
-    maxDiscount: 500,
-    usageLimit: 1000,
-    usedCount: 234,
-    perUserLimit: 1,
-    startDate: '2025-01-01',
-    endDate: '2025-02-28',
-    isActive: true,
-    createdAt: '2024-12-01',
-  },
-  {
-    id: '2',
-    code: 'FIRST100',
-    name: '新會員優惠',
-    description: '首次點燈折抵 $100',
-    type: 'fixed',
-    value: 100,
-    minOrderAmount: 500,
-    usageLimit: 5000,
-    usedCount: 1256,
-    perUserLimit: 1,
-    startDate: '2024-01-01',
-    endDate: '2025-12-31',
-    isActive: true,
-    createdAt: '2024-01-01',
-  },
-  {
-    id: '3',
-    code: 'LONGSHAN20',
-    name: '龍山寺專屬',
-    description: '龍山寺點燈 8 折',
-    type: 'percentage',
-    value: 20,
-    minOrderAmount: 800,
-    maxDiscount: 1000,
-    usageLimit: 500,
-    usedCount: 89,
-    perUserLimit: 2,
-    startDate: '2024-12-01',
-    endDate: '2025-03-31',
-    isActive: true,
-    applicableTemples: ['longshan-temple'],
-    createdAt: '2024-12-01',
-  },
-  {
-    id: '4',
-    code: 'LOVE500',
-    name: '月老燈特惠',
-    description: '月老燈折抵 $500',
-    type: 'fixed',
-    value: 500,
-    minOrderAmount: 1500,
-    usageLimit: 200,
-    usedCount: 45,
-    perUserLimit: 1,
-    startDate: '2024-12-01',
-    endDate: '2025-03-14',
-    isActive: true,
-    applicableLanterns: ['月老燈', '姻緣燈'],
-    createdAt: '2024-12-01',
-  },
-]
+// V1.0 正式版：模擬資料已移除，改為從 API 獲取
+// 請實作 API 端點：/api/coupons
+export const mockCoupons: Coupon[] = [] // 已移除模擬資料
 
 // 驗證折扣碼
 export interface CouponValidationResult {
@@ -99,7 +31,30 @@ export interface CouponValidationResult {
   message: string
 }
 
-export function validateCoupon(
+// V1.0 正式版：改為從 API 驗證折扣碼
+export async function validateCoupon(
+  code: string,
+  orderAmount: number,
+  templeSlug?: string,
+  lanternTypes?: string[],
+  userId?: string
+): Promise<CouponValidationResult> {
+  try {
+    // 從 API 獲取折扣碼資訊
+    const response = await fetch(`/api/coupons/validate?code=${encodeURIComponent(code)}&amount=${orderAmount}`)
+    if (!response.ok) {
+      return { valid: false, message: '折扣碼驗證失敗，請稍後再試' }
+    }
+    const data = await response.json()
+    return data
+  } catch (error) {
+    console.error('Coupon validation error:', error)
+    return { valid: false, message: '折扣碼驗證失敗，請稍後再試' }
+  }
+}
+
+// 向後兼容的同步版本（內部使用 mockCoupons，但 mockCoupons 已為空）
+export function validateCouponSync(
   code: string,
   orderAmount: number,
   templeSlug?: string,
@@ -190,6 +145,7 @@ export function calculateDiscountedPrice(
 
   return Math.max(0, originalPrice - discount)
 }
+
 
 
 

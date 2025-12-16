@@ -3,7 +3,9 @@
 @tailwind utilities;
 
 @layer base {
-  :root {
+  /* 傳統廟宇主題（預設） */
+  :root,
+  [data-theme="temple"] {
     --background: 0 0% 100%;
     --foreground: 20 14.3% 4.1%;
     --card: 0 0% 100%;
@@ -23,6 +25,30 @@
     --border: 20 5.9% 90%;
     --input: 20 5.9% 90%;
     --ring: 20 14.3% 4.1%;
+    --radius: 0.5rem;
+  }
+
+  /* 文青佛系主題 */
+  [data-theme="zen"] {
+    --background: 0 0% 98%;
+    --foreground: 140 10% 15%;
+    --card: 0 0% 100%;
+    --card-foreground: 140 10% 15%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 140 10% 15%;
+    --primary: 150 30% 45%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 140 15% 92%;
+    --secondary-foreground: 140 10% 25%;
+    --muted: 140 15% 95%;
+    --muted-foreground: 140 8% 45%;
+    --accent: 160 20% 88%;
+    --accent-foreground: 140 15% 25%;
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 140 15% 88%;
+    --input: 140 15% 88%;
+    --ring: 150 30% 45%;
     --radius: 0.5rem;
   }
 
@@ -76,6 +102,15 @@ body {
 
 .bg-temple-dark {
   background: linear-gradient(to bottom, #1a0a0a 0%, #4a1010 100%);
+}
+
+/* 文青佛系漸層背景 */
+[data-theme="zen"] .bg-temple-gradient {
+  background: linear-gradient(135deg, #6b8e7f 0%, #8db48c 50%, #a8c5a0 100%);
+}
+
+[data-theme="zen"] .bg-temple-dark {
+  background: linear-gradient(to bottom, #2d3d35 0%, #4a5d52 100%);
 }
 
 /* 燈籠發光效果 */
@@ -184,6 +219,7 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(to bottom, #b91c1c, #c2410c);
 }
+
 
 
 

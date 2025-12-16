@@ -123,13 +123,14 @@ export async function POST(request: NextRequest) {
 
     // 根據付款方式設定 ChoosePayment 參數
     // 綠界測試商店 3002607 支援的付款方式
+    // 注意：測試環境只支援 Credit (信用卡)
     let choosePayment = 'Credit' // 預設信用卡
-    if (paymentMethod === 'atm') {
+    if (paymentMethod === 'credit_card') {
+      choosePayment = 'Credit'
+    } else if (paymentMethod === 'atm') {
       choosePayment = 'ATM'
     } else if (paymentMethod === 'cvs') {
       choosePayment = 'CVS'
-    } else if (paymentMethod === 'credit_card') {
-      choosePayment = 'Credit'
     }
 
     // 取得網站 URL（確保有值）
@@ -142,14 +143,18 @@ export async function POST(request: NextRequest) {
       MerchantTradeDate: tradeDate,
       PaymentType: 'aio',
       TotalAmount: String(totalAmount),
-      TradeDesc: '台灣點燈網點燈服務',  // 不需要預先編碼
+      TradeDesc: '台灣點燈網點燈服務',
       ItemName: itemName,
       ReturnURL: returnUrl || `${siteUrl}/api/payment/callback`,
       ClientBackURL: clientBackUrl || `${siteUrl}/order-success?orderId=${orderId}`,
       ChoosePayment: choosePayment,
       EncryptType: '1',
-      CustomField1: orderId, // 儲存我們的訂單編號
-      NeedExtraPaidInfo: 'N', // 不需要額外付款資訊
+      NeedExtraPaidInfo: 'N',
+    }
+
+    // CustomField 是可選的，但如果要使用需要放在計算 CheckMacValue 之前
+    if (orderId) {
+      params.CustomField1 = orderId
     }
 
     // 如果是 ATM，需要加上繳費期限
@@ -160,6 +165,7 @@ export async function POST(request: NextRequest) {
     // 如果是超商代碼，需要加上繳費期限
     if (choosePayment === 'CVS') {
       params.StoreExpireDate = '10080' // 7 天 (以分鐘計)
+      params.Description = '台灣點燈網' // CVS 可能需要 Description
     }
 
     // 產生檢查碼

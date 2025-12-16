@@ -54,10 +54,16 @@ export default function CheckoutPage() {
 
   // 當 ecpayParams 設定後自動提交表單
   useEffect(() => {
-    if (ecpayParams && formRef.current) {
-      formRef.current.submit()
+    if (ecpayParams && ecpayUrl && formRef.current) {
+      // 稍微延遲確保 DOM 已經更新
+      const timer = setTimeout(() => {
+        if (formRef.current) {
+          formRef.current.submit()
+        }
+      }, 100)
+      return () => clearTimeout(timer)
     }
-  }, [ecpayParams])
+  }, [ecpayParams, ecpayUrl])
 
   // 伺服器端渲染時顯示載入狀態
   if (!mounted) {
@@ -139,29 +145,27 @@ export default function CheckoutPage() {
     }
   }
 
-  // 模擬付款（測試用）
-  const handleTestPayment = () => {
-    setProcessing(true)
-    setTimeout(() => {
-      setProcessing(false)
-      setShowFireworks(true)
-      
-      setTimeout(() => {
-        clearCart()
-        router.push('/order-success')
-      }, 2000)
-    }, 2000)
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-temple-red-50 to-white py-12">
       {showFireworks && <FireworkEffect trigger={true} />}
       
       {/* 綠界金流表單（隱藏） */}
-      {ecpayParams && (
-        <form ref={formRef} method="POST" action={ecpayUrl} style={{ display: 'none' }}>
+      {ecpayParams && ecpayUrl && (
+        <form 
+          ref={formRef} 
+          method="POST" 
+          action={ecpayUrl} 
+          id="ecpay-form"
+          style={{ display: 'none' }}
+        >
           {Object.entries(ecpayParams).map(([key, value]) => (
-            <input key={key} type="hidden" name={key} value={value} />
+            <input 
+              key={key} 
+              type="hidden" 
+              name={key} 
+              value={String(value)} 
+            />
           ))}
         </form>
       )}
@@ -396,19 +400,7 @@ export default function CheckoutPage() {
                 )}
               </Button>
 
-              {/* 測試按鈕（開發模式） */}
-              {process.env.NODE_ENV !== 'production' && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="lg"
-                  className="w-full text-gray-500"
-                  onClick={handleTestPayment}
-                  disabled={processing}
-                >
-                  🧪 模擬付款成功（測試用）
-                </Button>
-              )}
+              {/* V1.0 正式版：已移除模擬付款按鈕，僅使用綠界金流 */}
             </motion.div>
           </div>
         </form>

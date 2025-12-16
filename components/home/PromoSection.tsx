@@ -9,74 +9,49 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Lantern } from '@/components/temple/Lantern'
 import { PriceDisplay } from '@/components/ui/price-display'
 
-// 模擬優惠商品資料
-const mockPromoItems = [
-  {
-    id: 1,
-    type: 'lantern',
-    name: '光明燈',
-    temple: '艋舺龍山寺',
-    templeSlug: 'longshan-temple',
-    originalPrice: 1500,
-    salePrice: 1200,
-    saleEnd: '2025-02-15',
-    stock: 50,
-    sold: 32,
-    description: '新春特惠，照亮您的一整年',
-  },
-  {
-    id: 2,
-    type: 'lantern',
-    name: '財神燈',
-    temple: '臺北行天宮',
-    templeSlug: 'xingtian-temple',
-    originalPrice: 2000,
-    salePrice: 1600,
-    saleEnd: '2025-01-31',
-    stock: 30,
-    sold: 18,
-    description: '招財進寶，事業興旺',
-  },
-  {
-    id: 3,
-    type: 'lantern',
-    name: '月老燈',
-    temple: '臺北霞海城隍廟',
-    templeSlug: 'xiahai-temple',
-    originalPrice: 1800,
-    salePrice: 1530,
-    saleEnd: '2025-03-14',
-    stock: 40,
-    sold: 25,
-    description: '85折特惠，良緣早日到來',
-  },
-  {
-    id: 4,
-    type: 'event',
-    name: '2025新春祈福法會',
-    temple: '艋舺龍山寺',
-    templeSlug: 'longshan-temple',
-    originalPrice: 2500,
-    salePrice: 2000,
-    saleEnd: '2025-01-25',
-    stock: 300,
-    sold: 156,
-    description: '法師誦經祈福，含精美福袋',
-    eventSlug: 'new-year-blessing-2025',
-  },
-]
+// V1.0 正式版：模擬資料已移除，改為從 API 獲取
+// 請實作 API 端點：/api/promo-items
+
+interface PromoItem {
+  id: number
+  type: 'lantern' | 'event'
+  name: string
+  temple: string
+  templeSlug: string
+  originalPrice: number
+  salePrice: number
+  saleEnd: string
+  stock: number
+  sold: number
+  description: string
+  eventSlug?: string
+}
 
 export function PromoSection() {
   const [mounted, setMounted] = useState(false)
+  const [promoItems, setPromoItems] = useState<PromoItem[]>([])
 
   useEffect(() => {
     setMounted(true)
+    const fetchPromoItems = async () => {
+      try {
+        const response = await fetch('/api/promo-items')
+        if (response.ok) {
+          const data = await response.json()
+          setPromoItems(data)
+        }
+      } catch (error) {
+        console.error('Failed to fetch promo items:', error)
+        setPromoItems([])
+      }
+    }
+    fetchPromoItems()
   }, [])
 
   if (!mounted) return null
 
   // 過濾有效的優惠
-  const activePromos = mockPromoItems.filter(item => {
+  const activePromos = promoItems.filter(item => {
     const now = new Date()
     const end = new Date(item.saleEnd)
     return now <= end && item.stock > item.sold
@@ -221,6 +196,7 @@ export function PromoSection() {
     </section>
   )
 }
+
 
 
 

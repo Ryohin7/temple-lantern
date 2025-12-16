@@ -3,6 +3,7 @@ import { Noto_Sans_TC, Noto_Serif_TC } from 'next/font/google'
 import "./globals.css"
 import { Header } from "@/components/layout/Header"
 import { Footer } from "@/components/layout/Footer"
+import { ThemeProvider } from "@/components/providers/theme-provider"
 
 const notoSans = Noto_Sans_TC({
   subsets: ['latin'],
@@ -30,17 +31,20 @@ export default function RootLayout({
   return (
     <html lang="zh-TW">
       <body className={`${notoSans.variable} ${notoSerif.variable} font-sans antialiased`}>
-        <div className="min-h-screen flex flex-col">
-          <Header />
-          <main className="flex-1">
-            {children}
-          </main>
-          <Footer />
-        </div>
+        <ThemeProvider>
+          <div className="min-h-screen flex flex-col">
+            <Header />
+            <main className="flex-1">
+              {children}
+            </main>
+            <Footer />
+          </div>
+        </ThemeProvider>
       </body>
     </html>
   )
 }
+
 
 
 

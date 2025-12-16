@@ -40,22 +40,25 @@ export function CouponInput({
     setLoading(true)
     setResult(null)
 
-    // 模擬 API 請求延遲
-    await new Promise(resolve => setTimeout(resolve, 500))
+    try {
+      const validationResult = await validateCoupon(
+        code,
+        orderAmount,
+        templeSlug,
+        lanternTypes
+      )
 
-    const validationResult = validateCoupon(
-      code,
-      orderAmount,
-      templeSlug,
-      lanternTypes
-    )
+      setResult(validationResult)
+      setLoading(false)
 
-    setResult(validationResult)
-    setLoading(false)
-
-    if (validationResult.valid && validationResult.coupon && validationResult.discount) {
-      onApply(validationResult.coupon, validationResult.discount)
-      setShowInput(false)
+      if (validationResult.valid && validationResult.coupon && validationResult.discount) {
+        onApply(validationResult.coupon, validationResult.discount)
+        setShowInput(false)
+      }
+    } catch (error) {
+      console.error('Coupon validation error:', error)
+      setResult({ valid: false, message: '折扣碼驗證失敗，請稍後再試' })
+      setLoading(false)
     }
   }
 
@@ -155,25 +158,10 @@ export function CouponInput({
         )}
       </AnimatePresence>
 
-      {/* 可用折扣碼提示 */}
-      <div className="mt-3 text-xs text-gray-500">
-        <p>💡 試試這些折扣碼：</p>
-        <div className="flex flex-wrap gap-2 mt-1">
-          {['NEWYEAR2025', 'FIRST100'].map((c) => (
-            <button
-              key={c}
-              type="button"
-              onClick={() => setCode(c)}
-              className="px-2 py-1 bg-gray-100 hover:bg-temple-gold-100 rounded text-gray-600 hover:text-temple-gold-700 transition-colors"
-            >
-              {c}
-            </button>
-          ))}
-        </div>
-      </div>
     </div>
   )
 }
+
 
 
 

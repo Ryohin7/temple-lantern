@@ -7,6 +7,7 @@ import { ShoppingCart, User, Menu, X, Flame, Search, ClipboardList, CalendarDays
 import { Button } from '@/components/ui/button'
 import { useCartStore, useUserStore } from '@/lib/store'
 import { Lantern } from '../temple/Lantern'
+import { ThemeSwitcher } from '@/components/ui/theme-switcher'
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -69,9 +70,12 @@ export function Header() {
 
           {/* Actions */}
           <div className="flex items-center gap-2">
+            {/* Theme Switcher */}
+            <ThemeSwitcher />
+            
             {/* Search */}
             <Link href="/search">
-              <Button variant="ghost" size="icon" className="text-gray-600 hover:text-temple-red-600 hover:bg-temple-gold-50">
+              <Button variant="ghost" size="icon" className="text-gray-600 hover:text-temple-red-600 hover:bg-temple-gold-50 data-[theme=zen]:hover:text-sage-600 data-[theme=zen]:hover:bg-sage-50">
                 <Search className="w-5 h-5" />
               </Button>
             </Link>
