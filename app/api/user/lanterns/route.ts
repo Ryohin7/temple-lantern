@@ -44,7 +44,7 @@ export const GET = withAuth(async (user) => {
         }
 
         // 轉換為燈種格式並計算到期狀態
-        const lanterns = orders?.flatMap(order =>
+        const lanterns = orders?.flatMap((order: any) =>
             order.order_items?.map((item: any) => {
                 const lightingDate = new Date(item.created_at)
                 const durationMonths = item.lantern_products?.duration_months || 12
