@@ -55,6 +55,17 @@ export async function PUT(request: NextRequest) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
         }
 
+        // 獲取申請資料
+        const { data: application, error: fetchError } = await supabase
+            .from('temple_applications')
+            .select('*')
+            .eq('id', applicationId)
+            .single()
+
+        if (fetchError || !application) {
+            return NextResponse.json({ error: '找不到申請記錄' }, { status: 404 })
+        }
+
         // 更新申請狀態
         const updateData: any = {
             status,
@@ -65,89 +76,36 @@ export async function PUT(request: NextRequest) {
             updateData.rejection_reason = rejectionReason
         }
 
-        const { data: application, error } = await supabase
+        const { error } = await supabase
             .from('temple_applications')
             .update(updateData)
             .eq('id', applicationId)
-            .select()
-            .single()
 
         if (error) {
             console.error('Failed to update application:', error)
             return NextResponse.json({ error: 'Failed to update application' }, { status: 500 })
         }
 
-        // 如果批准，創建廟宇和管理員帳號
-        if (status === 'approved' && application) {
+        // 如果批准，更新用戶角色並創建廟宇
+        if (status === 'approved' && application.user_id) {
             try {
-                // 檢查用戶是否已存在
-                const { data: existingUser } = await supabase
+                // 1. 更新用戶角色為 temple_admin
+                const { error: roleError } = await supabase
                     .from('users')
-                    .select('id, role')
-                    .eq('email', application.admin_email)
-                    .single()
+                    .update({ role: 'temple_admin' })
+                    .eq('id', application.user_id)
 
-                let userId: string
-
-                if (existingUser) {
-                    // 用戶已存在，更新 role
-                    console.log('User already exists, updating role to temple_admin')
-                    userId = existingUser.id
-
-                    const { error: updateError } = await supabase
-                        .from('users')
-                        .update({
-                            role: 'temple_admin',
-                            name: application.admin_name,
-                            phone: application.admin_phone,
-                        })
-                        .eq('id', userId)
-
-                    if (updateError) {
-                        console.error('Failed to update user role:', updateError)
-                        return NextResponse.json({ error: '更新用戶角色失敗', details: updateError.message }, { status: 500 })
-                    }
-
-                    // 更新 Auth 用戶密碼（如果需要）
-                    await supabase.auth.admin.updateUserById(userId, {
-                        password: application.admin_password_hash,
-                    })
-                } else {
-                    // 用戶不存在，創建新用戶
-                    console.log('Creating new user')
-                    const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
-                        email: application.admin_email,
-                        password: application.admin_password_hash,
-                        email_confirm: true,
-                    })
-
-                    if (authError) {
-                        console.error('Failed to create auth user:', authError)
-                        return NextResponse.json({ error: '創建用戶帳號失敗', details: authError.message }, { status: 500 })
-                    }
-
-                    userId = authUser.user.id
-
-                    // 創建 users 記錄
-                    const { error: userError } = await supabase
-                        .from('users')
-                        .insert({
-                            id: userId,
-                            email: application.admin_email,
-                            name: application.admin_name,
-                            phone: application.admin_phone,
-                            role: 'temple_admin',
-                        })
-
-                    if (userError) {
-                        console.error('Failed to create user record:', userError)
-                        await supabase.auth.admin.deleteUser(userId)
-                        return NextResponse.json({ error: '創建用戶記錄失敗', details: userError.message }, { status: 500 })
-                    }
+                if (roleError) {
+                    console.error('Failed to update user role:', roleError)
+                    return NextResponse.json({ error: '更新用戶角色失敗' }, { status: 500 })
                 }
 
-                // 創建 temples 記錄
-                const templeSlug = application.temple_name.toLowerCase().replace(/[^a-z0-9\u4e00-\u9fa5]+/g, '-').replace(/^-+|-+$/g, '')
+                // 2. 創建 temples 記錄
+                const templeSlug = application.temple_name
+                    .toLowerCase()
+                    .replace(/[^a-z0-9\u4e00-\u9fa5]+/g, '-')
+                    .replace(/^-+|-+$/g, '')
+
                 const { error: templeError } = await supabase
                     .from('temples')
                     .insert({
@@ -158,20 +116,25 @@ export async function PUT(request: NextRequest) {
                         email: application.email,
                         main_god: application.main_god,
                         description: application.description || '',
-                        owner_id: userId,
+                        owner_id: application.user_id,
                         status: 'active',
                         theme_color: '#DC2626',
                     })
 
                 if (templeError) {
                     console.error('Failed to create temple:', templeError)
-                    return NextResponse.json({ error: '創建廟宇記錄失敗', details: templeError.message }, { status: 500 })
+                    return NextResponse.json({ error: '創建廟宇記錄失敗' }, { status: 500 })
                 }
 
-                console.log('Successfully created/updated temple account:', { userId, email: application.admin_email })
-            } catch (createError) {
-                console.error('Error during account creation:', createError)
-                return NextResponse.json({ error: '創建帳號過程發生錯誤' }, { status: 500 })
+                console.log('Successfully approved temple application:', {
+                    userId: application.user_id,
+                    email: application.admin_email,
+                })
+
+                // TODO: 發送批准通知 email
+            } catch (approvalError) {
+                console.error('Error during approval:', approvalError)
+                return NextResponse.json({ error: '批准過程發生錯誤' }, { status: 500 })
             }
         }
 
@@ -183,8 +146,7 @@ export async function PUT(request: NextRequest) {
     }
 }
 
-// PATCH 方法作為 PUT 的別名（某些配置可能需要）
+// PATCH 方法作為 PUT 的別名
 export async function PATCH(request: NextRequest) {
     return PUT(request)
 }
-
