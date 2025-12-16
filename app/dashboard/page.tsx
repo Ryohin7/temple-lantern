@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { 
-  User, ShoppingBag, Heart, Settings, LogOut, 
+import {
+  User, ShoppingBag, Heart, Settings, LogOut,
   Edit, ChevronRight, Flame, Calendar, Clock
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -66,21 +66,72 @@ const mockLanterns = [
 export default function DashboardPage() {
   const [mounted, setMounted] = useState(false)
   const [activeTab, setActiveTab] = useState('overview')
-  const setUser = useUserStore((state) => state.setUser)
+  const [user, setUser] = useState<any>(null)
+  const [orders, setOrders] = useState<any[]>([])
+  const [lanterns, setLanterns] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const userStore = useUserStore((state) => state.user)
+  const clearUser = useUserStore((state) => state.setUser)
 
   useEffect(() => {
     setMounted(true)
+    fetchUserData()
   }, [])
 
-  const handleLogout = () => {
-    setUser(null)
+  const fetchUserData = async () => {
+    try {
+      setLoading(true)
+
+      // 獲取當前用戶
+      const { getCurrentUser } = await import('@/lib/auth')
+      const currentUser = await getCurrentUser()
+
+      if (currentUser) {
+        setUser(currentUser)
+
+        // 獲取用戶訂單
+        const ordersRes = await fetch('/api/orders')
+        if (ordersRes.ok) {
+          const ordersData = await ordersRes.json()
+          setOrders(ordersData)
+        }
+
+        // 獲取用戶點燈記錄
+        const lanternsRes = await fetch('/api/user/lanterns')
+        if (lanternsRes.ok) {
+          const lanternsData = await lanternsRes.json()
+          setLanterns(lanternsData)
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch user data:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleLogout = async () => {
+    const { signOut } = await import('@/lib/auth')
+    await signOut()
+    clearUser(null)
     window.location.href = '/'
   }
 
-  if (!mounted) {
+  if (!mounted || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-4xl animate-bounce">🏮</div>
+      </div>
+    )
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600 mb-4">請先登入</p>
+          <Button onClick={() => window.location.href = '/login'}>前往登入</Button>
+        </div>
       </div>
     )
   }
@@ -110,15 +161,15 @@ export default function DashboardPage() {
           >
             {/* Avatar */}
             <div className="w-24 h-24 bg-white/20 rounded-full flex items-center justify-center text-5xl">
-              {mockUser.avatar || '👤'}
+              👤
             </div>
             <div>
               <h1 className="text-3xl font-temple font-bold">
-                {mockUser.name}
+                {user.name || '用戶'}
               </h1>
-              <p className="opacity-80">{mockUser.email}</p>
+              <p className="opacity-80">{user.email}</p>
               <p className="text-sm opacity-60 mt-1">
-                會員自 {mockUser.memberSince}
+                會員自 {new Date(user.created_at || Date.now()).toLocaleDateString('zh-TW')}
               </p>
             </div>
           </motion.div>
@@ -141,11 +192,10 @@ export default function DashboardPage() {
                     <button
                       key={item.id}
                       onClick={() => setActiveTab(item.id)}
-                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
-                        activeTab === item.id
-                          ? 'bg-temple-red-600 text-white'
-                          : 'hover:bg-gray-100 text-gray-700'
-                      }`}
+                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${activeTab === item.id
+                        ? 'bg-temple-red-600 text-white'
+                        : 'hover:bg-gray-100 text-gray-700'
+                        }`}
                     >
                       {item.icon}
                       {item.label}
@@ -177,18 +227,18 @@ export default function DashboardPage() {
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                   <Card className="text-center py-6">
                     <div className="text-4xl mb-2">🏮</div>
-                    <div className="text-3xl font-bold text-temple-red-700">{mockLanterns.length}</div>
+                    <div className="text-3xl font-bold text-temple-red-700">{lanterns.length}</div>
                     <div className="text-gray-600 text-sm">點燈數</div>
                   </Card>
                   <Card className="text-center py-6">
                     <div className="text-4xl mb-2">📋</div>
-                    <div className="text-3xl font-bold text-temple-red-700">{mockOrders.length}</div>
+                    <div className="text-3xl font-bold text-temple-red-700">{orders.length}</div>
                     <div className="text-gray-600 text-sm">訂單數</div>
                   </Card>
                   <Card className="text-center py-6">
                     <div className="text-4xl mb-2">🙏</div>
-                    <div className="text-3xl font-bold text-temple-red-700">12</div>
-                    <div className="text-gray-600 text-sm">祈福次數</div>
+                    <div className="text-3xl font-bold text-temple-red-700">{lanterns.filter((l: any) => l.active).length}</div>
+                    <div className="text-gray-600 text-sm">進行中</div>
                   </Card>
                 </div>
 
@@ -205,25 +255,28 @@ export default function DashboardPage() {
                     </Button>
                   </CardHeader>
                   <CardContent>
-                    {mockLanterns.filter(l => l.active).map((lantern) => (
-                      <div key={lantern.id} className="flex items-center justify-between p-4 bg-temple-gold-50 rounded-lg mb-3 last:mb-0">
-                        <div className="flex items-center gap-4">
-                          <Lantern size="sm" color="red" animate={false} />
-                          <div>
-                            <div className="font-medium text-temple-red-800">
-                              {lantern.temple} - {lantern.lantern}
-                            </div>
-                            <div className="text-sm text-gray-600">
-                              信眾：{lantern.believer}
+                    {lanterns.filter((l: any) => l.active).length === 0 ? (
+                      <p className="text-gray-500 text-center py-4">目前沒有進行中的點燈</p>
+                    ) : (
+                      lanterns.filter((l: any) => l.active).map((lantern: any) => (
+                        <div key={lantern.id} className="flex items-center justify-between p-4 bg-temple-gold-50 rounded-lg mb-3 last:mb-0">
+                          <div className="flex items-center gap-4">
+                            <Lantern size="sm" color="red" animate={false} />
+                            <div>
+                              <div className="font-medium text-temple-red-800">
+                                {lantern.temple} - {lantern.lantern}
+                              </div>
+                              <div className="text-sm text-gray-600">
+                                信眾：{lantern.believer}
+                              </div>
                             </div>
                           </div>
+                          <div className="text-right text-sm">
+                            <div className="text-gray-500">有效期限</div>
+                            <div className="font-medium">{lantern.endDate}</div>
+                          </div>
                         </div>
-                        <div className="text-right text-sm">
-                          <div className="text-gray-500">有效期限</div>
-                          <div className="font-medium">{lantern.endDate}</div>
-                        </div>
-                      </div>
-                    ))}
+                      ))}
                   </CardContent>
                 </Card>
 
@@ -237,18 +290,21 @@ export default function DashboardPage() {
                     </Button>
                   </CardHeader>
                   <CardContent>
-                    {mockOrders.slice(0, 3).map((order) => (
-                      <div key={order.id} className="flex items-center justify-between py-3 border-b last:border-0">
-                        <div>
-                          <div className="font-mono text-sm text-gray-500">{order.id}</div>
-                          <div className="font-medium">{order.temple} - {order.lantern}</div>
+                    {orders.length === 0 ? (
+                      <p className="text-gray-500 text-center py-4">目前沒有訂單記錄</p>
+                    ) : (
+                      orders.slice(0, 3).map((order: any) => (
+                        <div key={order.id} className="flex items-center justify-between py-3 border-b last:border-0">
+                          <div>
+                            <div className="font-mono text-sm text-gray-500">{order.id}</div>
+                            <div className="font-medium">{order.temple} - {order.lantern}</div>
+                          </div>
+                          <div className="text-right">
+                            <div className="font-medium">NT$ {order.amount.toLocaleString()}</div>
+                            {getStatusBadge(order.status)}
+                          </div>
                         </div>
-                        <div className="text-right">
-                          <div className="font-medium">NT$ {order.amount.toLocaleString()}</div>
-                          {getStatusBadge(order.status)}
-                        </div>
-                      </div>
-                    ))}
+                      ))}
                   </CardContent>
                 </Card>
               </motion.div>
@@ -265,24 +321,27 @@ export default function DashboardPage() {
                     <CardTitle className="text-lg">訂單紀錄</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    {mockOrders.map((order) => (
-                      <Link key={order.id} href={`/orders/${order.id}`}>
-                        <div className="flex items-center justify-between p-4 border rounded-lg mb-3 hover:border-temple-gold-400 hover:shadow-md transition-all">
-                          <div>
-                            <div className="font-mono text-sm text-gray-500">{order.id}</div>
-                            <div className="font-medium">{order.temple}</div>
-                            <div className="text-sm text-gray-600 flex items-center gap-2 mt-1">
-                              <Calendar className="w-4 h-4" />
-                              {order.date}
+                    {orders.length === 0 ? (
+                      <p className="text-gray-500 text-center py-8">目前沒有訂單記錄</p>
+                    ) : (
+                      orders.map((order: any) => (
+                        <Link key={order.id} href={`/orders/${order.id}`}>
+                          <div className="flex items-center justify-between p-4 border rounded-lg mb-3 hover:border-temple-gold-400 hover:shadow-md transition-all">
+                            <div>
+                              <div className="font-mono text-sm text-gray-500">{order.id}</div>
+                              <div className="font-medium">{order.temple}</div>
+                              <div className="text-sm text-gray-600 flex items-center gap-2 mt-1">
+                                <Calendar className="w-4 h-4" />
+                                {order.date}
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-lg font-bold text-temple-red-700">NT$ {order.amount.toLocaleString()}</div>
+                              {getStatusBadge(order.status)}
                             </div>
                           </div>
-                          <div className="text-right">
-                            <div className="text-lg font-bold text-temple-red-700">NT$ {order.amount.toLocaleString()}</div>
-                            {getStatusBadge(order.status)}
-                          </div>
-                        </div>
-                      </Link>
-                    ))}
+                        </Link>
+                      ))}
                   </CardContent>
                 </Card>
               </motion.div>
@@ -299,43 +358,45 @@ export default function DashboardPage() {
                     <CardTitle className="text-lg">點燈紀錄</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    {mockLanterns.map((lantern) => (
-                      <div key={lantern.id} className="p-4 border rounded-lg mb-3 hover:border-temple-gold-400 transition-all">
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-center gap-4">
-                            <div className="w-16 h-16 bg-temple-gradient rounded-lg flex items-center justify-center">
-                              <Lantern size="sm" color="gold" animate={false} />
-                            </div>
-                            <div>
-                              <div className="font-bold text-temple-red-800">{lantern.lantern}</div>
-                              <div className="text-sm text-gray-600">{lantern.temple}</div>
-                              <div className="text-sm text-gray-500 mt-1">
-                                信眾：{lantern.believer}
+                    {lanterns.length === 0 ? (
+                      <p className="text-gray-500 text-center py-8">目前沒有點燈記錄</p>
+                    ) : (
+                      lanterns.map((lantern: any) => (
+                        <div key={lantern.id} className="p-4 border rounded-lg mb-3 hover:border-temple-gold-400 transition-all">
+                          <div className="flex items-start justify-between">
+                            <div className="flex items-center gap-4">
+                              <div className="w-16 h-16 bg-temple-gradient rounded-lg flex items-center justify-center">
+                                <Lantern size="sm" color="gold" animate={false} />
+                              </div>
+                              <div>
+                                <div className="font-bold text-temple-red-800">{lantern.lantern}</div>
+                                <div className="text-sm text-gray-600">{lantern.temple}</div>
+                                <div className="text-sm text-gray-500 mt-1">
+                                  信眾：{lantern.believer}
+                                </div>
                               </div>
                             </div>
-                          </div>
-                          <div className="text-right">
-                            <span className={`px-3 py-1 rounded-full text-sm ${
-                              lantern.active 
-                                ? 'bg-green-100 text-green-700' 
+                            <div className="text-right">
+                              <span className={`px-3 py-1 rounded-full text-sm ${lantern.active
+                                ? 'bg-green-100 text-green-700'
                                 : 'bg-gray-100 text-gray-600'
-                            }`}>
-                              {lantern.active ? '燈火長明中' : '已結束'}
-                            </span>
+                                }`}>
+                                {lantern.active ? '燈火長明中' : '已結束'}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="mt-4 pt-4 border-t grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                              <span className="text-gray-500">開始日期：</span>
+                              <span>{lantern.startDate}</span>
+                            </div>
+                            <div>
+                              <span className="text-gray-500">結束日期：</span>
+                              <span>{lantern.endDate}</span>
+                            </div>
                           </div>
                         </div>
-                        <div className="mt-4 pt-4 border-t grid grid-cols-2 gap-4 text-sm">
-                          <div>
-                            <span className="text-gray-500">開始日期：</span>
-                            <span>{lantern.startDate}</span>
-                          </div>
-                          <div>
-                            <span className="text-gray-500">結束日期：</span>
-                            <span>{lantern.endDate}</span>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+                      ))}
                   </CardContent>
                 </Card>
               </motion.div>
