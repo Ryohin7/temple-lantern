@@ -109,7 +109,7 @@ export async function GET(request: NextRequest) {
 
         // 按廟宇分組統計
         const templeRevenue = new Map()
-        templeStats?.forEach(order => {
+        templeStats?.forEach((order: any) => {
             const templeId = order.temple_id
             const templeName = order.temples?.name || '未知廟宇'
             const amount = order.total_amount || 0
