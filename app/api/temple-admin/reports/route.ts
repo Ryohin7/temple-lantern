@@ -47,7 +47,7 @@ export async function GET(request: Request) {
       `)
 
         // 統計每種燈的銷售數量
-        const lanternStats = topLanterns?.reduce((acc: any, item) => {
+        const lanternStats = topLanterns?.reduce((acc: any, item: any) => {
             const lanternName = item.lantern_products?.name || 'Unknown'
             if (!acc[lanternName]) {
                 acc[lanternName] = 0
