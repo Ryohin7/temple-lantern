@@ -45,7 +45,7 @@ export const GET = withAuth(async (user) => {
 
         // 轉換為燈種格式並計算到期狀態
         const lanterns = orders?.flatMap(order =>
-            order.order_items?.map(item => {
+            order.order_items?.map((item: any) => {
                 const lightingDate = new Date(item.created_at)
                 const durationMonths = item.lantern_products?.duration_months || 12
                 const expiryDate = new Date(lightingDate)
@@ -67,12 +67,17 @@ export const GET = withAuth(async (user) => {
                     id: item.id,
                     orderId: order.id,
                     userId: user.id,
-                    templeName: order.temples?.name || '',
+                    temple: order.temples?.name || '未知廟宇',
                     templeSlug: order.temples?.slug || '',
-                    lanternType: item.lantern_products?.name || '',
+                    name: item.lantern_products?.name || '未知燈種',
+                    category: item.lantern_products?.category || 'general',
                     believerName: item.believer_name,
-                    lightingDate: lightingDate.toISOString().split('T')[0],
-                    expiryDate: expiryDate.toISOString().split('T')[0],
+                    birthDate: item.birth_date,
+                    birthTime: item.birth_time,
+                    wishText: item.wish_text,
+                    lightingDate: lightingDate.toISOString(),
+                    expiryDate: expiryDate.toISOString(),
+                    daysLeft,
                     status,
                     certificateUrl: item.certificate_url
                 }
