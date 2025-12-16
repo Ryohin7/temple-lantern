@@ -13,14 +13,18 @@ import AdminLayout from '@/components/admin/AdminLayout'
 export default function AdminSettingsPage() {
   const [mounted, setMounted] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
   const [settings, setSettings] = useState({
-    siteName: '台灣點燈網',
-    siteDescription: '線上祈福點燈平台',
-    contactEmail: 'contact@temple-lantern.tw',
-    contactPhone: '02-1234-5678',
+    siteName: '',
+    siteDescription: '',
+    contactEmail: '',
+    contactPhone: '',
     platformFeeRate: 5,
     minOrderAmount: 100,
     maxOrderAmount: 100000,
+    ecpayMerchantId: '',
+    ecpayHashKey: '',
+    ecpayHashIV: '',
     enableRegistration: true,
     enableGoogleLogin: true,
     enableEmailNotification: true,
@@ -36,12 +40,11 @@ export default function AdminSettingsPage() {
   const fetchSettings = async () => {
     try {
       setLoading(true)
-      // TODO: 實作 /api/admin/settings API
-      // const res = await fetch('/api/admin/settings')
-      // if (res.ok) {
-      //   const data = await res.json()
-      //   setSettings(data)
-      // }
+      const res = await fetch('/api/admin/settings')
+      if (res.ok) {
+        const data = await res.json()
+        setSettings(prevSettings => ({ ...prevSettings, ...data }))
+      }
     } catch (error) {
       console.error('Failed to fetch settings:', error)
     } finally {
@@ -51,18 +54,24 @@ export default function AdminSettingsPage() {
 
   const handleSave = async () => {
     try {
-      // TODO: 實作 /api/admin/settings API
-      // const res = await fetch('/api/admin/settings', {
-      //   method: 'PUT',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(settings),
-      // })
-      // if (res.ok) {
-      //   alert('設定已儲存！')
-      // }
-      alert('設定已儲存！（待實作 API）')
+      setSaving(true)
+      const res = await fetch('/api/admin/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(settings),
+      })
+
+      if (res.ok) {
+        alert('設定已儲存！')
+      } else {
+        const error = await res.json()
+        alert(`儲存失敗：${error.error}`)
+      }
     } catch (error) {
       console.error('Failed to save settings:', error)
+      alert('儲存失敗，請稍後再試')
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -79,9 +88,9 @@ export default function AdminSettingsPage() {
             </h1>
             <p className="text-gray-500 text-sm">平台全域設定與參數調整</p>
           </div>
-          <Button onClick={handleSave} variant="temple">
+          <Button onClick={handleSave} variant="temple" disabled={saving}>
             <Save className="w-4 h-4 mr-2" />
-            儲存設定
+            {saving ? '儲存中...' : '儲存設定'}
           </Button>
         </div>
       </header>
@@ -206,19 +215,33 @@ export default function AdminSettingsPage() {
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Merchant ID
                         </label>
-                        <Input placeholder="請輸入綠界商店代號" />
+                        <Input
+                          placeholder="請輸入綠界商店代號"
+                          value={settings.ecpayMerchantId}
+                          onChange={(e) => setSettings({ ...settings, ecpayMerchantId: e.target.value })}
+                        />
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Hash Key
                         </label>
-                        <Input type="password" placeholder="••••••••" />
+                        <Input
+                          type="password"
+                          placeholder="••••••••"
+                          value={settings.ecpayHashKey}
+                          onChange={(e) => setSettings({ ...settings, ecpayHashKey: e.target.value })}
+                        />
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Hash IV
                         </label>
-                        <Input type="password" placeholder="••••••••" />
+                        <Input
+                          type="password"
+                          placeholder="••••••••"
+                          value={settings.ecpayHashIV}
+                          onChange={(e) => setSettings({ ...settings, ecpayHashIV: e.target.value })}
+                        />
                       </div>
                     </div>
                   </div>

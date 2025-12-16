@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { DollarSign, Download, TrendingUp } from 'lucide-react'
+import { DollarSign, Download, TrendingUp, CreditCard, Percent } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import AdminLayout from '@/components/admin/AdminLayout'
@@ -21,23 +21,11 @@ export default function AdminFinancePage() {
   const fetchFinancialData = async () => {
     try {
       setLoading(true)
-      // TODO: 實作財務報表 API
-      // const res = await fetch(`/api/admin/finance?range=${dateRange}`)
-      // if (res.ok) {
-      //   const data = await res.json()
-      //   setFinancialData(data)
-      // }
-
-      // 暫時設為空資料
-      setFinancialData({
-        totalRevenue: 0,
-        monthlyRevenue: 0,
-        platformFee: 0,
-        monthlyPlatformFee: 0,
-        pendingSettlement: 0,
-        settledAmount: 0,
-        feeRate: 5,
-      })
+      const res = await fetch(`/api/admin/finance?range=${dateRange}`)
+      if (res.ok) {
+        const data = await res.json()
+        setFinancialData(data)
+      }
     } catch (error) {
       console.error('Failed to fetch financial data:', error)
     } finally {
@@ -99,14 +87,15 @@ export default function AdminFinancePage() {
                       <div>
                         <p className="text-gray-500 text-sm">平台總營收</p>
                         <p className="text-2xl font-bold text-gray-900">
-                          ${financialData?.totalRevenue?.toLocaleString() || 0}
+                          ${financialData?.stats?.totalRevenue?.toLocaleString() || 0}
                         </p>
-                        <p className="text-gray-500 text-sm mt-1">
-                          待實作 API
+                        <p className="text-green-600 text-sm flex items-center gap-1 mt-1">
+                          <TrendingUp className="w-4 h-4" />
+                          期間 ${financialData?.stats?.periodRevenue?.toLocaleString() || 0}
                         </p>
                       </div>
                       <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                        <DollarSign className="w-6 h-6 text-blue-600" />
+                        <CreditCard className="w-6 h-6 text-blue-600" />
                       </div>
                     </div>
                   </CardContent>
@@ -124,14 +113,14 @@ export default function AdminFinancePage() {
                       <div>
                         <p className="text-gray-500 text-sm">平台抽成收入</p>
                         <p className="text-2xl font-bold text-temple-red-600">
-                          ${financialData?.platformFee?.toLocaleString() || 0}
+                          ${financialData?.stats?.platformFee?.toLocaleString() || 0}
                         </p>
                         <p className="text-gray-500 text-sm mt-1">
-                          抽成比例：{financialData?.feeRate || 5}%
+                          抽成比例：{financialData?.stats?.feeRate || 5}%
                         </p>
                       </div>
                       <div className="w-12 h-12 bg-temple-red-100 rounded-full flex items-center justify-center">
-                        <TrendingUp className="w-6 h-6 text-temple-red-600" />
+                        <Percent className="w-6 h-6 text-temple-red-600" />
                       </div>
                     </div>
                   </CardContent>
@@ -149,10 +138,10 @@ export default function AdminFinancePage() {
                       <div>
                         <p className="text-gray-500 text-sm">待結算金額</p>
                         <p className="text-2xl font-bold text-yellow-600">
-                          ${financialData?.pendingSettlement?.toLocaleString() || 0}
+                          ${financialData?.stats?.pendingSettlement?.toLocaleString() || 0}
                         </p>
                         <p className="text-gray-500 text-sm mt-1">
-                          待實作 API
+                          下次結算：每月15日
                         </p>
                       </div>
                       <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
@@ -174,10 +163,10 @@ export default function AdminFinancePage() {
                       <div>
                         <p className="text-gray-500 text-sm">已結算金額</p>
                         <p className="text-2xl font-bold text-green-600">
-                          ${financialData?.settledAmount?.toLocaleString() || 0}
+                          ${financialData?.stats?.settledAmount?.toLocaleString() || 0}
                         </p>
                         <p className="text-gray-500 text-sm mt-1">
-                          待實作 API
+                          累計已結
                         </p>
                       </div>
                       <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
@@ -189,23 +178,130 @@ export default function AdminFinancePage() {
               </motion.div>
             </div>
 
-            {/* Info Card */}
-            <Card className="bg-blue-50 border-blue-200">
-              <CardContent className="p-6">
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <span className="text-2xl">ℹ️</span>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+              {/* Monthly Trend */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
+              >
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">營收趨勢</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {financialData?.monthlyTrend?.map((data: any, index: number) => (
+                        <div key={data.month} className="flex items-center gap-4">
+                          <div className="w-12 text-gray-500 text-sm">{data.month}</div>
+                          <div className="flex-1">
+                            <div className="h-6 bg-gray-100 rounded-full overflow-hidden">
+                              <motion.div
+                                initial={{ width: 0 }}
+                                animate={{ width: `${Math.min((data.revenue / 500000) * 100, 100)}%` }}
+                                transition={{ delay: 0.6 + index * 0.1 }}
+                                className="h-full bg-gradient-to-r from-temple-red-500 to-temple-orange-500 rounded-full"
+                              />
+                            </div>
+                          </div>
+                          <div className="w-28 text-right">
+                            <div className="font-medium text-gray-900">${(data.revenue / 10000).toFixed(1)}萬</div>
+                            <div className="text-xs text-temple-red-600">抽成 ${data.fee.toLocaleString()}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+
+              {/* Temple Ranking */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6 }}
+              >
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">廟宇收入排行</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {financialData?.templeRanking?.length > 0 ? (
+                        financialData.templeRanking.map((temple: any) => (
+                          <div key={temple.rank} className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-white ${temple.rank === 1 ? 'bg-yellow-500' :
+                                temple.rank === 2 ? 'bg-gray-400' :
+                                  temple.rank === 3 ? 'bg-amber-600' :
+                                    'bg-gray-300'
+                              }`}>
+                              {temple.rank}
+                            </div>
+                            <div className="flex-1">
+                              <div className="font-medium text-gray-900">{temple.name}</div>
+                              <div className="text-sm text-gray-500">{temple.orders} 筆訂單</div>
+                            </div>
+                            <div className="text-right">
+                              <div className="font-bold text-temple-red-600">${temple.revenue.toLocaleString()}</div>
+                              <div className="text-xs text-gray-500">抽成 ${(temple.revenue * 0.05).toLocaleString()}</div>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-center text-gray-500 py-4">暫無數據</p>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </div>
+
+            {/* Payment Methods */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.7 }}
+            >
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">付款方式統計</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-3 gap-6">
+                    <div className="bg-blue-50 p-6 rounded-xl text-center">
+                      <div className="text-4xl mb-2">💳</div>
+                      <div className="text-2xl font-bold text-blue-600">
+                        {financialData?.paymentMethods?.creditCard?.percentage || 0}%
+                      </div>
+                      <div className="text-gray-600">信用卡</div>
+                      <div className="text-sm text-gray-500 mt-1">
+                        ${financialData?.paymentMethods?.creditCard?.amount?.toLocaleString() || 0}
+                      </div>
+                    </div>
+                    <div className="bg-green-50 p-6 rounded-xl text-center">
+                      <div className="text-4xl mb-2">🏧</div>
+                      <div className="text-2xl font-bold text-green-600">
+                        {financialData?.paymentMethods?.atm?.percentage || 0}%
+                      </div>
+                      <div className="text-gray-600">ATM 轉帳</div>
+                      <div className="text-sm text-gray-500 mt-1">
+                        ${financialData?.paymentMethods?.atm?.amount?.toLocaleString() || 0}
+                      </div>
+                    </div>
+                    <div className="bg-purple-50 p-6 rounded-xl text-center">
+                      <div className="text-4xl mb-2">🏪</div>
+                      <div className="text-2xl font-bold text-purple-600">
+                        {financialData?.paymentMethods?.convenience?.percentage || 0}%
+                      </div>
+                      <div className="text-gray-600">超商代碼</div>
+                      <div className="text-sm text-gray-500 mt-1">
+                        ${financialData?.paymentMethods?.convenience?.amount?.toLocaleString() || 0}
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-bold text-blue-900 mb-2">財務報表功能</h3>
-                    <p className="text-blue-800 text-sm">
-                      財務報表功能需要實作 <code className="px-2 py-1 bg-blue-100 rounded">/api/admin/finance</code> API 來獲取真實的財務數據。
-                      包括營收統計、平台抽成、結算記錄等功能。
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </motion.div>
           </>
         )}
       </div>
