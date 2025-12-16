@@ -11,45 +11,50 @@ export const GET = withAuth(async (user, request) => {
         const { searchParams } = new URL(request.url)
         const slug = searchParams.get('slug')
 
-        let query = supabase
-            .from('page_contents')
-            .select('*')
-
         if (slug) {
-            query = query.eq('page_key', slug).single()
+            // Query single page
+            const { data, error } = await supabase
+                .from('page_contents')
+                .select('*')
+                .eq('page_key', slug)
+                .single()
+
+            if (error) {
+                if (error.code === 'PGRST116') {
+                    return NextResponse.json({ error: 'Page not found' }, { status: 404 })
+                }
+                console.error('Content API error:', error)
+                return NextResponse.json({ error: error.message }, { status: 500 })
+            }
+
+            // Map page_key to slug for frontend
+            return NextResponse.json({
+                ...data,
+                slug: data.page_key
+            })
         } else {
-            query = query.order('updated_at', { ascending: false })
-        }
+            // Query all pages
+            const { data, error } = await supabase
+                .from('page_contents')
+                .select('*')
+                .order('updated_at', { ascending: false })
 
-        const { data, error } = await query
-
-        if (error) {
-            // 如果是查詢單個且未找到，返回 404
-            if (slug && error.code === 'PGRST116') {
-                return NextResponse.json({ error: 'Page not found' }, { status: 404 })
+            if (error) {
+                console.error('Content API error:', error)
+                return NextResponse.json({ error: error.message }, { status: 500 })
             }
-            console.error('Failed to fetch pages:', error)
-            // 如果表不存在，返回空陣列而不是錯誤
-            if (error.code === '42P01') {
-                return NextResponse.json(slug ? { error: 'Table not found' } : [])
-            }
-            return NextResponse.json(slug ? { error: 'Failed to fetch page' } : [], { status: 500 })
+
+            // Map page_key to slug for frontend
+            const formattedData = (data || []).map((item: any) => ({
+                ...item,
+                slug: item.page_key
+            }))
+
+            return NextResponse.json(formattedData)
         }
-
-        // 轉換 page_key 為 slug 供前端使用
-        const formatData = (item: any) => ({
-            ...item,
-            slug: item.page_key
-        })
-
-        const formattedData = Array.isArray(data)
-            ? data.map(formatData)
-            : data ? formatData(data) : (slug ? {} : []);
-
-        return NextResponse.json(formattedData)
     } catch (error) {
         console.error('Content API error:', error)
-        return NextResponse.json([])
+        return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
     }
 }, { requiredRole: 'admin' })
 
