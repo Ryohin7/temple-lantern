@@ -42,11 +42,15 @@ export async function POST(request: NextRequest) {
             )
         }
 
-        // 1. 立即創建 Auth 用戶
+        // 1. 立即創建 Auth 用戶（trigger 會自動創建 users 記錄）
         const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
             email: body.adminEmail,
             password: body.password,
             email_confirm: true,
+            user_metadata: {
+                name: body.adminName,
+                phone: body.adminPhone,
+            }
         })
 
         if (authError) {
@@ -57,25 +61,20 @@ export async function POST(request: NextRequest) {
             )
         }
 
-        // 2. 創建 users 記錄（role = 'user'，等批准後再改為 temple_admin）
+        // 2. Trigger 已自動創建 users 記錄，等待一下讓它完成
+        await new Promise(resolve => setTimeout(resolve, 1000))
+
+        // 更新用戶資料
         const { error: userError } = await supabase
             .from('users')
-            .insert({
-                id: authUser.user.id,
-                email: body.adminEmail,
+            .update({
                 name: body.adminName,
                 phone: body.adminPhone,
-                role: 'user', // 先設為 user，批准後改為 temple_admin
             })
+            .eq('id', authUser.user.id)
 
         if (userError) {
-            console.error('Failed to create user record:', userError)
-            // 如果創建失敗，刪除 Auth 用戶
-            await supabase.auth.admin.deleteUser(authUser.user.id)
-            return NextResponse.json(
-                { error: '創建用戶記錄失敗：' + userError.message },
-                { status: 500 }
-            )
+            console.error('Failed to update user record:', userError)
         }
 
         // 3. 創建申請記錄
