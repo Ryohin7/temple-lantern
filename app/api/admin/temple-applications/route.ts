@@ -93,3 +93,9 @@ export async function PUT(request: NextRequest) {
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
     }
 }
+
+// PATCH 方法作為 PUT 的別名（某些配置可能需要）
+export async function PATCH(request: NextRequest) {
+    return PUT(request)
+}
+
