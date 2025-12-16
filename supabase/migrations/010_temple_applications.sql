@@ -26,11 +26,11 @@ CREATE TABLE IF NOT EXISTS public.temple_applications (
 -- 設定 RLS
 ALTER TABLE public.temple_applications ENABLE ROW LEVEL SECURITY;
 
--- 任何人都可以提交申請
+-- 任何人都可以提交申請（包含未登入用戶）
 CREATE POLICY "Anyone can submit temple application"
   ON public.temple_applications
   FOR INSERT
-  TO public
+  TO anon, authenticated
   WITH CHECK (true);
 
 -- 只有管理員可以查看所有申請
@@ -81,5 +81,5 @@ CREATE TRIGGER temple_applications_updated_at
   EXECUTE FUNCTION update_temple_applications_timestamp();
 
 -- 創建索引
-CREATE INDEX idx_temple_applications_status ON public.temple_applications(status);
-CREATE INDEX idx_temple_applications_created_at ON public.temple_applications(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_temple_applications_status ON public.temple_applications(status);
+CREATE INDEX IF NOT EXISTS idx_temple_applications_created_at ON public.temple_applications(created_at DESC);

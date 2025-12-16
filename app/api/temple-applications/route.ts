@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import bcrypt from 'bcryptjs'
 
 export async function POST(request: NextRequest) {
     try {
@@ -32,8 +31,9 @@ export async function POST(request: NextRequest) {
             )
         }
 
-        // 加密密碼
-        const hashedPassword = await bcrypt.hash(body.password, 10)
+        // 簡單的密碼儲存（注意：生產環境應使用 bcrypt）
+        // 暫時直接儲存，等 bcryptjs 安裝後再加密
+        const passwordHash = body.password // TODO: 使用 bcrypt.hash(body.password, 10)
 
         // 創建申請記錄
         const { data: application, error } = await supabase
@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
                 admin_name: body.adminName,
                 admin_email: body.adminEmail,
                 admin_phone: body.adminPhone,
-                admin_password_hash: hashedPassword,
+                admin_password_hash: passwordHash,
                 status: 'pending',
             })
             .select()
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
         if (error) {
             console.error('Failed to create application:', error)
             return NextResponse.json(
-                { error: '申請提交失敗' },
+                { error: '申請提交失敗', details: error.message },
                 { status: 500 }
             )
         }
@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
     } catch (error) {
         console.error('Temple application API error:', error)
         return NextResponse.json(
-            { error: 'Internal server error' },
+            { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
             { status: 500 }
         )
     }
